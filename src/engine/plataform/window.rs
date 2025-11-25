@@ -16,6 +16,14 @@ impl WindowHandler {
         Ok(())
     }
 
+    fn resize(&mut self, width: u32, height: u32) {
+        todo!()
+    }
+
+    fn draw(&mut self) {
+        todo!()
+    }
+
     fn handle_event(&mut self, event_loop: &dyn ActiveEventLoop, event: &WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {

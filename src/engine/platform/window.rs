@@ -1,3 +1,4 @@
+use winit::error::RequestError;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes};
@@ -8,21 +9,20 @@ pub struct WindowManager {
 }
 
 impl WindowManager {
-    pub fn create(&mut self, event_loop: &dyn ActiveEventLoop) {
-        let window_attributes: WindowAttributes = WindowAttributes::default();
+    pub fn create_window(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), RequestError> {
+        let attributes: WindowAttributes =
+            WindowAttributes::default().with_title("RedPixel Engine");
 
-        match event_loop.create_window(window_attributes) {
+        match event_loop.create_window(attributes) {
             Ok(window) => {
                 self.window = Some(window);
+                Ok(())
             }
-            Err(err) => {
-                eprintln!("Failed to create window: {err:?}");
-                event_loop.exit();
-            }
+            Err(err) => Err(err),
         }
     }
 
-    pub fn handle_event(&mut self, event_loop: &dyn ActiveEventLoop, event: &WindowEvent) {
+    pub fn event_handler(&mut self, event_loop: &dyn ActiveEventLoop, event: &WindowEvent) {
         match event {
             WindowEvent::CloseRequested => {
                 println!("CloseRequested Event");
@@ -36,5 +36,9 @@ impl WindowManager {
             }
             _ => (),
         }
+    }
+
+    pub fn request_redraw(&mut self) {
+        todo!("WindowManager 'request_redraw' not implemented yet.")
     }
 }

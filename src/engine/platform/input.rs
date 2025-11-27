@@ -2,8 +2,9 @@ use winit::event::WindowEvent;
 
 #[derive(Debug, Default)]
 pub struct InputManager;
+
 impl InputManager {
-    pub fn handle_event(&mut self, event: &WindowEvent) {
+    pub fn event_handler(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::KeyboardInput {
                 device_id,

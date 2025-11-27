@@ -18,7 +18,7 @@ impl WindowManager {
                 self.window = Some(window);
                 Ok(())
             }
-            Err(err) => Err(err),
+            Err(e) => Err(e),
         }
     }
 
@@ -36,9 +36,5 @@ impl WindowManager {
             }
             _ => (),
         }
-    }
-
-    pub fn request_redraw(&mut self) {
-        todo!("WindowManager 'request_redraw' not implemented yet.")
     }
 }

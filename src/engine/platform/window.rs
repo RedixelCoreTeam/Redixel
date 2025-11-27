@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use winit::error::RequestError;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
@@ -5,7 +7,7 @@ use winit::window::{Window, WindowAttributes};
 
 #[derive(Debug, Default)]
 pub struct WindowManager {
-    window: Option<Box<dyn Window>>,
+    window: Option<Arc<dyn Window>>,
 }
 
 impl WindowManager {
@@ -18,8 +20,12 @@ impl WindowManager {
             WindowAttributes::default().with_title("RedPixel Engine");
 
         let window: Box<dyn Window> = event_loop.create_window(attributes)?;
-        self.window = Some(window);
+        self.window = Some(Arc::from(window));
         Ok(())
+    }
+
+    pub fn get_window(&self) -> Option<Arc<dyn Window>> {
+        self.window.clone()
     }
 
     pub fn request_redraw(&self) {

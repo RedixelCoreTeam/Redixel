@@ -23,5 +23,9 @@ impl ApplicationHandler for Runtime {
     fn window_event(&mut self, event_loop: &dyn ActiveEventLoop, _i: WindowId, event: WindowEvent) {
         self.window_manager.event_handler(event_loop, &event);
         self.input_manager.event_handler(&event);
+
+        if event == WindowEvent::RedrawRequested {
+            self.window_manager.request_redraw();
+        }
     }
 }

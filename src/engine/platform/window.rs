@@ -10,31 +10,30 @@ pub struct WindowManager {
 
 impl WindowManager {
     pub fn create_window(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), RequestError> {
+        if self.window.is_some() {
+            return Ok(());
+        }
+
         let attributes: WindowAttributes =
             WindowAttributes::default().with_title("RedPixel Engine");
 
-        match event_loop.create_window(attributes) {
-            Ok(window) => {
-                self.window = Some(window);
-                Ok(())
-            }
-            Err(e) => Err(e),
+        let window: Box<dyn Window> = event_loop.create_window(attributes)?;
+        self.window = Some(window);
+        Ok(())
+    }
+
+    pub fn request_redraw(&self) {
+        if let Some(window) = &self.window {
+            window.request_redraw();
         }
     }
 
     pub fn event_handler(&mut self, event_loop: &dyn ActiveEventLoop, event: &WindowEvent) {
         match event {
-            WindowEvent::CloseRequested => {
-                println!("CloseRequested Event");
-                event_loop.exit();
-            }
-            WindowEvent::SurfaceResized(_) => {
-                println!("SurfaceResized Event");
-            }
-            WindowEvent::RedrawRequested => {
-                println!("RedrawRequested Event");
-            }
-            _ => (),
+            WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),
+            WindowEvent::Focused(_is_focused) => {}
+            WindowEvent::SurfaceResized(_size) => {}
+            _ => {}
         }
     }
 }

@@ -1,57 +1,57 @@
 # RedPixel Engine (Work in Progress)
 
 RedPixel is an experimental 2D game engine written in Rust.
-The goal of this project is to build a clean, modular, and scalable engine architecture from scratch, and later use this engine as the foundation for developing games.
+The goal of this project is to build a clean, modular, and scalable engine architecture from scratch, adhering to strict software engineering standards and modern Rust best practices.
 
-This repository is currently in an early exploration stage.
+## Tech Stack
 
-## Overview
+- **Language:** Rust
+- **Windowing:** Winit (Event Loop & Platform Abstraction)
+- **Graphics:** WGPU (WebGPU implementation for Vulkan/Metal/DX12)
 
-RedPixel focuses on understanding and implementing the fundamental layers of a modern game engine.
-The project aims to explore:
+## Architecture
 
-- platform abstraction
-- window management
-- input processing (planned)
-- rendering architecture prepared for WGPU (planned)
-- engine systems that can be reused across multiple games
+The engine uses a strict layered architecture to separate concerns. No circular dependencies are allowed between layers.
 
-This is not a finished engine, nor a game. It is a long-term learning and engineering project.
+### 1. Runtime Layer (`runtime.rs`)
 
-## Current Features
+The "Brain" of the engine. It implements the Winit `ApplicationHandler` trait.
 
-- Initial project structure
-- Window creation using Winit
-- Basic event handling (resize, redraw, close)
+- **Responsibility:** Orchestrates the lifecycle (Start, Update, Render, Stop).
+- **Behavior:** Owns the sub-systems and manages the flow of data between them.
 
-## Architecture Direction
+### 2. Platform Layer (`platform/`)
 
-The engine is being structured in layers to ensure separation of responsibilities and clarity.
+Abstracts the Operating System specifics.
 
-### Platform Layer
+- **Window Manager:** Handles window creation, lifecycle events, and safe suspension/resumption.
+- **Input Manager:** Decouples raw Winit events from game logic (sanitizes input).
 
-Interacts directly with the operating system.
-Responsibilities include:
+### 3. Graphics Layer (`graphics/`)
 
-- window creation
-- event loop
-- raw event processing
-- surface creation for a future renderer
+Abstracts the GPU hardware.
 
-Currently, this is the main implemented layer.
+- **Renderer:** Encapsulates the WGPU Instance, Surface, Device, Queue, and Render Pipeline.
+- **Current Capability:** Basic render pass with hardcoded geometry (Hardware check).
 
 ## Directory Structure
 
-Current structure:
+The project follows the "Sibling Module" pattern to keep the file tree clean.
 
-```
+```text
 src/
-  engine/
-    platform/
-        window.rs
-        input.rs (planned)
-  main.rs
-  lib.rs
+├── engine/
+│   ├── graphics/           # GPU interaction layer
+│   │   └── renderer.rs     # WGPU Context & Render Pipeline
+│   ├── platform/           # OS interaction layer
+│   │   ├── input.rs        # Input event sanitization
+│   │   └── window.rs       # Window lifecycle management
+│   ├── graphics.rs         # Module definition for graphics
+│   ├── platform.rs         # Module definition for platform
+│   └── runtime.rs          # Main Application Handler (The Engine Loop)
+├── engine.rs               # Engine library root
+├── lib.rs                  # Library entry point (init)
+└── main.rs                 # Binary entry point (bootstrapping)
 ```
 
 This layout will evolve as more engine systems are introduced.
@@ -63,4 +63,6 @@ Expect structural changes, experimentation, and reorganization as the architectu
 
 ## License
 
-(To be defined.)
+RedPixel is distributed under the terms of the Apache License (Version 2.0).
+
+See [LICENSE](LICENSE) for details.

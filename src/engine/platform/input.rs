@@ -7,20 +7,20 @@ impl InputManager {
     pub fn event_handler(&mut self, event: &WindowEvent) {
         match event {
             WindowEvent::KeyboardInput {
-                device_id,
-                event,
-                is_synthetic,
+                device_id: _,
+                event: _,
+                is_synthetic: _,
             } => {}
             WindowEvent::MouseWheel {
-                device_id,
-                delta,
-                phase,
+                device_id: _,
+                delta: _,
+                phase: _,
             } => {}
             WindowEvent::PointerMoved {
-                device_id,
-                position,
-                primary,
-                source,
+                device_id: _,
+                position: _,
+                primary: _,
+                source: _,
             } => {}
             _ => {}
         }

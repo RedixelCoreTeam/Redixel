@@ -13,7 +13,7 @@ reorder_modules = true
 trailing_comma = "Vertical"
 
 # Import Style: Merge imports from the same crate (e.g., use std::{fs, io})
-import_granularity = "Crate"
+imports_granularity = "Crate"
 
 # Struct Layout: Vertically align struct fields
 struct_field_align_threshold = 20

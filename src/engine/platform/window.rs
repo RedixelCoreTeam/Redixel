@@ -16,9 +16,7 @@ impl WindowManager {
             return Ok(());
         }
 
-        let attributes: WindowAttributes =
-            WindowAttributes::default().with_title("RedPixel Engine");
-
+        let attributes: WindowAttributes = WindowAttributes::default().with_title("RedPixel Engine");
         let window: Box<dyn Window> = event_loop.create_window(attributes)?;
         self.window = Some(Arc::from(window));
         Ok(())

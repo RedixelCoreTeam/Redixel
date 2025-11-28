@@ -20,7 +20,7 @@ jobs:
         run: rustup show
 
       - name: Check Formatting
-        run: cargo fmt -- --check
+        run: cargo fmt -- --check --no-deps
 
       - name: Run Clippy
         run: cargo clippy -- -D warnings

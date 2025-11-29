@@ -32,9 +32,8 @@ impl WindowManager {
         }
     }
 
-    pub fn event_handler(&mut self, event_loop: &dyn ActiveEventLoop, event: &WindowEvent) {
+    pub fn event_handler(&mut self, event: &WindowEvent) {
         match event {
-            WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),
             WindowEvent::Focused(_is_focused) => {}
             WindowEvent::SurfaceResized(_size) => {}
             _ => {}

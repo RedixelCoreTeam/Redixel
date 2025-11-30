@@ -4,9 +4,11 @@
 **Goal:** Establish the OS communication and main loop.
 - [x]  Project structure (Workspace/Modules).
 - [x]  Window creation.
+- [x]  Renderer module.
 - [ ]  Event Loop (Polling, Control Flow).
 - [ ]  Time Management (Delta Time, FPS Accumulator).
-- [ ]  Strict Error Handling & Logging.
+- [ ]  Strict Error Handling.
+- [ ]  Logging.
 
 ## **Phase 2 — The Graphics Core**
 **Goal:** Move from "Hardcoded Triangle" to a usable, data-driven Rendering API.

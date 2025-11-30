@@ -1,10 +1,31 @@
-use std::{error::Error, sync::Arc};
-use wgpu::{
-    Adapter, Backends, CreateSurfaceError, Device, ExperimentalFeatures, Features, Instance, InstanceDescriptor,
-    MemoryHints, PowerPreference, PresentMode, Queue, RequestAdapterError, RequestAdapterOptions, RequestDeviceError,
-    Surface, SurfaceCapabilities, SurfaceConfiguration, TextureFormat, TextureUsages, Trace, wgt::DeviceDescriptor,
-};
-use winit::{dpi::PhysicalSize, window::Window};
+use std::error::Error;
+use std::sync::Arc;
+
+use wgpu::Adapter;
+use wgpu::Backends;
+use wgpu::CreateSurfaceError;
+use wgpu::Device;
+use wgpu::ExperimentalFeatures;
+use wgpu::Features;
+use wgpu::Instance;
+use wgpu::InstanceDescriptor;
+use wgpu::MemoryHints;
+use wgpu::PowerPreference;
+use wgpu::PresentMode;
+use wgpu::Queue;
+use wgpu::RequestAdapterError;
+use wgpu::RequestAdapterOptions;
+use wgpu::RequestDeviceError;
+use wgpu::Surface;
+use wgpu::SurfaceCapabilities;
+use wgpu::SurfaceConfiguration;
+use wgpu::TextureFormat;
+use wgpu::TextureUsages;
+use wgpu::Trace;
+use wgpu::wgt::DeviceDescriptor;
+
+use winit::dpi::PhysicalSize;
+use winit::window::Window;
 
 #[derive(Debug)]
 pub struct RendererDevice {
@@ -48,7 +69,7 @@ impl RendererDevice {
         instance
             .request_adapter(&RequestAdapterOptions {
                 power_preference: PowerPreference::HighPerformance,
-                compatible_surface: Some(&surface),
+                compatible_surface: Some(surface),
                 force_fallback_adapter: false,
             })
             .await

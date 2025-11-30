@@ -1,9 +1,21 @@
-use std::{error::Error, sync::Arc};
-use wgpu::{
-    Color, CommandEncoder, CommandEncoderDescriptor, LoadOp, Operations, RenderPassColorAttachment,
-    RenderPassDescriptor, StoreOp, SurfaceError, SurfaceTexture, TextureView, TextureViewDescriptor,
-};
-use winit::{dpi::PhysicalSize, window::Window};
+use std::error::Error;
+use std::sync::Arc;
+
+use wgpu::Color;
+use wgpu::CommandEncoder;
+use wgpu::CommandEncoderDescriptor;
+use wgpu::LoadOp;
+use wgpu::Operations;
+use wgpu::RenderPassColorAttachment;
+use wgpu::RenderPassDescriptor;
+use wgpu::StoreOp;
+use wgpu::SurfaceError;
+use wgpu::SurfaceTexture;
+use wgpu::TextureView;
+use wgpu::TextureViewDescriptor;
+
+use winit::dpi::PhysicalSize;
+use winit::window::Window;
 
 use super::renderer_device::RendererDevice;
 

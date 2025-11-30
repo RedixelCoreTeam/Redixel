@@ -9,6 +9,7 @@
 - [ ]  Time Management (Delta Time, FPS Accumulator).
 - [ ]  Strict Error Handling.
 - [ ]  Logging.
+- [ ]  Continuous Performance Benchmarking (CI-based FPS Regression Checks). *(Optional)*
 
 ## **Phase 2 — The Graphics Core**
 **Goal:** Move from "Hardcoded Triangle" to a usable, data-driven Rendering API.

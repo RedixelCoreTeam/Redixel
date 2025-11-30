@@ -4,9 +4,11 @@
 **Goal:** Establish the OS communication and main loop.
 - [x]  Project structure (Workspace/Modules).
 - [x]  Window creation.
+- [x]  Renderer module.
 - [ ]  Event Loop (Polling, Control Flow).
 - [ ]  Time Management (Delta Time, FPS Accumulator).
-- [ ]  Strict Error Handling & Logging.
+- [ ]  Strict Error Handling.
+- [ ]  Logging.
 - [ ]  Continuous Performance Benchmarking (CI-based FPS Regression Checks). *(Optional)*
 
 ## **Phase 2 — The Graphics Core**

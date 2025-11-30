@@ -22,9 +22,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `WindowManager` for window creation, lifecycle handling, and redraw requests.
   - `InputManager` for basic input event dispatch (keyboard, mouse wheel, pointer movement).
 
-- **Engine module layout** (`engine`, `runtime`, `platform/input`, `platform/window`).
+- **Graphics layer**:
+
+* Implemented **`RendererDevice`**, handling:
+
+  - WGPU instance creation (`Instance`)
+  - Surface creation from a `winit` window
+  - Adapter selection with `HighPerformance` preference
+  - Device & queue creation via `request_device`
+  - Automatic surface format and present-mode selection
+  - Surface configuration (`SurfaceConfiguration`) including SRGB format detection
+
+* Implemented **`Renderer`**, providing:
+
+  - Clear-color rendering pipeline (basic render pass)
+  - Swapchain acquisition (`get_current_texture`)
+  - Command encoder creation & submission
+  - Resize handling that updates surface configuration
+  - Presentation of rendered frames
+
+- **Engine module layout** (`engine`, `runtime`, `platform/input`, `platform/window`, `graphics/renderer`, `graphics/renderer_device`).
 - Basic **window creation** with default attributes and fallback error handling.
 - Basic **input processing** pipeline (stub handlers ready for expansion).
+
 - CI pipeline (`.github/workflows/cy.yml`) including:
 
   - Rust toolchain bootstrap

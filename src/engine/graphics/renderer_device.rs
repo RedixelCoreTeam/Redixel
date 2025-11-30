@@ -62,7 +62,7 @@ impl RendererDevice {
     }
 
     fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
-        instance.create_surface(window.clone())
+        instance.create_surface(window.clone()) // TODO: No need for cloning.
     }
 
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {

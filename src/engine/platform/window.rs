@@ -22,7 +22,7 @@ impl WindowManager {
     }
 
     pub fn get_window(&self) -> Arc<dyn Window> {
-        self.window.clone()
+        self.window.clone() // TODO: No need for cloning.
     }
 
     pub fn handle_window_event(&self, event: &WindowEvent) {

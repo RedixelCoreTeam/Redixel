@@ -74,7 +74,7 @@ impl ApplicationHandler for Runtime {
                 renderer,
             } => match event {
                 WindowEvent::RedrawRequested => {
-                    let _ = renderer.render(); // TODO: Handle Surface Errors
+                    let _ = renderer.render(); // TODO: Handle Surface Errors.
                     window_manager.request_redraw();
                 }
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),

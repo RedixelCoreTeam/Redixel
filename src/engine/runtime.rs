@@ -1,9 +1,14 @@
 use std::error::Error;
+use std::sync::Arc;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::Sender;
+use std::sync::mpsc::channel;
 
 use winit::application::ApplicationHandler;
-use winit::error::RequestError;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
+use winit::event_loop::EventLoopProxy;
+use winit::window::Window;
 use winit::window::WindowId;
 
 use super::graphics::renderer::Renderer;
@@ -12,8 +17,9 @@ use super::platform::window::WindowManager;
 
 #[derive(Debug)]
 enum AppState {
-    Error,
     Initializing,
+    Loading,
+    Error,
     Running {
         renderer: Renderer,
         input_manager: InputManager,
@@ -21,51 +27,103 @@ enum AppState {
     },
 }
 
+type InitResult = Result<(Renderer, WindowManager), String>;
+
 #[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
+    init_rx: Receiver<InitResult>,
+    init_tx: Sender<InitResult>,
 }
 
 impl Runtime {
     pub fn new() -> Self {
+        let (tx, rx) = channel();
         Self {
+            init_rx: rx,
+            init_tx: tx,
             app_state: AppState::Initializing,
         }
     }
 
-    fn transition_to_running(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), String> {
-        let window_manager: WindowManager = WindowManager::new(event_loop)
-            .map_err(|e: RequestError| format!("Failed to initialize Window Manager: {e}"))?;
-
-        let renderer: Renderer = pollster::block_on(Renderer::new(window_manager.get_window()))
-            .map_err(|e: Box<dyn Error + 'static>| format!("Failed to initialize Renderer: {e}"))?;
-
-        self.app_state = AppState::Running {
-            renderer,
-            window_manager,
-            input_manager: InputManager::new(),
+    fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) {
+        let window_manager: WindowManager = match WindowManager::new(event_loop) {
+            Ok(window_manager) => window_manager,
+            Err(e) => {
+                eprintln!("Failed to initialize Window Manager: {e}");
+                self.app_state = AppState::Error;
+                return;
+            }
         };
 
-        Ok(())
+        let window: Arc<dyn Window> = window_manager.get_window();
+        let proxy: EventLoopProxy = event_loop.create_proxy();
+        let sender: Sender<Result<(Renderer, WindowManager), String>> = self.init_tx.clone();
+
+        let init_future = async move {
+            let result: Result<Renderer, Box<dyn Error>> = Renderer::new(window).await;
+
+            match result {
+                Ok(renderer) => {
+                    let _ = sender.send(Ok((renderer, window_manager)));
+                }
+                Err(e) => {
+                    let _ = sender.send(Err(format!("Failed to initialize Renderer: {e}")));
+                }
+            }
+
+            proxy.wake_up();
+        };
+
+        #[cfg(target_arch = "wasm32")]
+        wasm_bindgen_futures::spawn_local(init_future);
+
+        #[cfg(not(target_arch = "wasm32"))]
+        std::thread::spawn(move || pollster::block_on(init_future));
+
+        self.app_state = AppState::Loading;
+    }
+
+    fn complete_initialization(&mut self) {
+        if let Ok(result) = self.init_rx.try_recv() {
+            match result {
+                Ok((renderer, window_manager)) => {
+                    self.app_state = AppState::Running {
+                        renderer,
+                        window_manager,
+                        input_manager: InputManager::new(),
+                    };
+                    println!("RedPixel Engine initialized successfully!");
+                }
+                Err(e) => {
+                    eprintln!("RedPixel Runtime Initialization failed: {e}");
+                    self.app_state = AppState::Error;
+                }
+            }
+        }
     }
 }
 
 impl ApplicationHandler for Runtime {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
-        if matches!(&self.app_state, AppState::Initializing) {
-            match self.transition_to_running(event_loop) {
-                Ok(()) => println!("RedPixel Engine initialized successfully!"),
-                Err(e) => {
-                    eprintln!("RedPixel Runtime Initialization failed: {e}");
-                    self.app_state = AppState::Error;
-                    event_loop.exit();
-                }
+        if matches!(self.app_state, AppState::Initializing) {
+            self.start_initialization(event_loop);
+        }
+    }
+
+    fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
+        if matches!(self.app_state, AppState::Loading) {
+            self.complete_initialization();
+
+            if let AppState::Error = self.app_state {
+                event_loop.exit();
             }
         }
     }
 
     fn window_event(&mut self, event_loop: &dyn ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match &mut self.app_state {
+            AppState::Loading => {}
             AppState::Initializing => {}
             AppState::Error => event_loop.exit(),
             AppState::Running {

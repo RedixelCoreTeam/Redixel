@@ -9,6 +9,7 @@ use wgpu::ExperimentalFeatures;
 use wgpu::Features;
 use wgpu::Instance;
 use wgpu::InstanceDescriptor;
+use wgpu::Limits;
 use wgpu::MemoryHints;
 use wgpu::PowerPreference;
 use wgpu::PresentMode;
@@ -76,10 +77,16 @@ impl RendererDevice {
     }
 
     async fn create_device(adapter: &Adapter) -> Result<(Device, Queue), RequestDeviceError> {
+        let limits: Limits = if cfg!(target_arch = "wasm32") {
+            Limits::downlevel_webgl2_defaults()
+        } else {
+            adapter.limits()
+        };
+
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: adapter.limits(),
+                required_limits: limits,
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,

@@ -108,6 +108,10 @@ impl ApplicationHandler<AppEvent> for Runtime {
                         window_manager,
                         input_manager,
                     };
+                    // Request first draw manually, i think there is a more automatic way, but, for now this is it
+                    if let AppState::Running { window_manager, .. } = &self.app_state {
+                        window_manager.request_redraw();
+                    }
                 } else {
                     log::error!("RendererCreated not in Waiting state!");
                 }

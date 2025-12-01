@@ -101,23 +101,25 @@ impl ApplicationHandler<AppEvent> for Runtime {
                 // If rendering creation fail self.app_state keeps AppState::Error value
                 let old_state: AppState = std::mem::replace(&mut self.app_state, AppState::Error);
 
-                if let AppState::WaitingForRenderer {
-                    window_manager,
-                    input_manager,
-                } = old_state
-                {
-                    // Transition to Running
-                    self.app_state = AppState::Running {
-                        renderer,
+                match old_state {
+                    AppState::WaitingForRenderer {
                         window_manager,
                         input_manager,
-                    };
-                    // Request first draw manually, i think there is a more automatic way, but, for now this is it
-                    if let AppState::Running { window_manager, .. } = &self.app_state {
+                    } => {
+                        // Request first draw manually, i think there is a more automatic way, but, for now this is it
                         window_manager.request_redraw();
+
+                        // Transition to Running
+                        self.app_state = AppState::Running {
+                            renderer,
+                            window_manager,
+                            input_manager,
+                        };
                     }
-                } else {
-                    log::error!("RendererCreated not in Waiting state!");
+                    state => {
+                        log::error!("RendererCreated not in Waiting state: {:?}", state);
+                        self.app_state = state;
+                    }
                 }
             }
         }
@@ -157,8 +159,13 @@ impl ApplicationHandler<AppEvent> for Runtime {
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
-        if let AppState::Running { .. } = &self.app_state {
-            self.app_state = AppState::Initializing;
+        match self.app_state {
+            AppState::Initializing => {}
+            AppState::WaitingForRenderer { .. } => {}
+            AppState::Running { .. } => {
+                self.app_state = AppState::Initializing;
+            }
+            AppState::Error => {}
         }
     }
 }

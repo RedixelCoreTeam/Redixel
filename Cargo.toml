@@ -13,6 +13,7 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Document", "Window", "HtmlCanvasElement", "Element"] }
 console_log = "1.0"
 console_error_panic_hook = "0.1"
+wgpu = { version = "27.0.1", features = ["webgl"] }
 
 [dependencies]
 env_logger = "0.11.8"
@@ -20,3 +21,4 @@ log = "0.4.28"
 pollster = "0.4.0"
 wgpu = "27.0.1"
 winit = "0.31.0-beta.2"
+cfg-if = "1"

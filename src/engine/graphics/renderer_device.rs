@@ -116,8 +116,8 @@ impl RendererDevice {
         SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width: size.width.max(1),
+            height: size.height.max(1),
             present_mode: surface_present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format],

@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::sync::Arc;
 
+use wgpu::wgt::DeviceDescriptor;
 use wgpu::Adapter;
 use wgpu::Backends;
 use wgpu::CreateSurfaceError;
@@ -22,7 +23,6 @@ use wgpu::SurfaceConfiguration;
 use wgpu::TextureFormat;
 use wgpu::TextureUsages;
 use wgpu::Trace;
-use wgpu::wgt::DeviceDescriptor;
 
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
@@ -80,8 +80,7 @@ impl RendererDevice {
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
                 required_limits: if cfg!(target_arch = "wasm32") {
-                    wgpu::Limits::downlevel_webgl2_defaults()
-                            .using_resolution(adapter.limits())
+                    wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits())
                 } else {
                     wgpu::Limits::default()
                 },

@@ -21,15 +21,14 @@ impl WindowManager {
     pub fn new(event_loop: &ActiveEventLoop) -> Result<Self, OsError> {
         #[allow(unused)]
         let mut attributes: WindowAttributes = WindowAttributes::default().with_title("RedPixel Engine");
-        
+
         // GET Big big CANVAS
         #[cfg(target_arch = "wasm32")]
         {
             let win = web_sys::window().expect("No global window found");
             let doc = win.document().expect("No document found");
             if let Some(canvas_element) = doc.get_element_by_id("canvas") {
-                 let canvas: web_sys::HtmlCanvasElement = canvas_element
-                    .unchecked_into::<web_sys::HtmlCanvasElement>();
+                let canvas: web_sys::HtmlCanvasElement = canvas_element.unchecked_into::<web_sys::HtmlCanvasElement>();
                 attributes = attributes.with_canvas(Some(canvas));
             }
         }
@@ -41,7 +40,7 @@ impl WindowManager {
         })
     }
 
-    pub fn get_window(&self) -> Arc< Window> {
+    pub fn get_window(&self) -> Arc<Window> {
         self.window.clone() // TODO: See if there is a better way than cloning here
     }
 

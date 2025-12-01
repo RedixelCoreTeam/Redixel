@@ -15,7 +15,7 @@ pub enum AppEvent {
 
 #[derive(Debug)]
 enum AppState {
-    Initializing, 
+    Initializing,
     // Window created, waiting for GPU (WASM specific mostly)
     WaitingForRenderer {
         window_manager: WindowManager,
@@ -27,7 +27,7 @@ enum AppState {
         window_manager: WindowManager,
         input_manager: InputManager,
     },
-    Error, 
+    Error,
 }
 
 pub struct Runtime {
@@ -73,12 +73,12 @@ impl ApplicationHandler<AppEvent> for Runtime {
             match WindowManager::new(event_loop) {
                 Ok(window_manager) => {
                     log::info!("Window created successfully.");
-                    
+
                     // Start Async Renderer Creation
                     self.init_renderer(window_manager.get_window());
 
                     // Move state to Waiting
-                    // This waits for renderer creation 
+                    // This waits for renderer creation
                     self.app_state = AppState::WaitingForRenderer {
                         window_manager,
                         input_manager: InputManager::default(),
@@ -97,11 +97,15 @@ impl ApplicationHandler<AppEvent> for Runtime {
         match event {
             AppEvent::RendererCreated(renderer) => {
                 log::info!("Renderer created. Transitioning to Running.");
-                
+
                 // If rendering creation fail self.app_state keeps AppState::Error value
                 let old_state: AppState = std::mem::replace(&mut self.app_state, AppState::Error);
 
-                if let AppState::WaitingForRenderer { window_manager, input_manager } = old_state {
+                if let AppState::WaitingForRenderer {
+                    window_manager,
+                    input_manager,
+                } = old_state
+                {
                     // Transition to Running
                     self.app_state = AppState::Running {
                         renderer,
@@ -119,20 +123,19 @@ impl ApplicationHandler<AppEvent> for Runtime {
         }
     }
 
-    fn window_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _window_id: WindowId,
-        event: WindowEvent,
-    ) {
-        if let AppState::Running { renderer, window_manager, input_manager } = &mut self.app_state {
-            
+    fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
+        if let AppState::Running {
+            renderer,
+            window_manager,
+            input_manager,
+        } = &mut self.app_state
+        {
             input_manager.handle_input_event(&event);
             window_manager.handle_window_event(&event);
 
             match event {
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),
-                
+
                 WindowEvent::RedrawRequested => {
                     let size: winit::dpi::PhysicalSize<u32> = window_manager.get_window().inner_size();
                     if size.width > 0 && size.height > 0 {
@@ -145,7 +148,7 @@ impl ApplicationHandler<AppEvent> for Runtime {
                         Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),
                         Err(e) => log::error!("Render error: {:?}", e),
                     }
-                    
+
                     window_manager.request_redraw();
                 }
                 _ => {}

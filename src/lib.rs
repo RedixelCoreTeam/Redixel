@@ -1,6 +1,6 @@
 mod engine;
-use engine::runtime::{Runtime, AppEvent};
-use winit::event_loop::{EventLoop, ControlFlow};
+use engine::runtime::{AppEvent, Runtime};
+use winit::event_loop::{ControlFlow, EventLoop};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -16,7 +16,9 @@ pub fn init() {
         }
     }
 
-    let event_loop: EventLoop<AppEvent> = EventLoop::with_user_event().build().expect("Failed to create event loop");
+    let event_loop: EventLoop<AppEvent> = EventLoop::with_user_event()
+        .build()
+        .expect("Failed to create event loop");
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let mut runtime: Runtime = Runtime::new(event_loop.create_proxy());

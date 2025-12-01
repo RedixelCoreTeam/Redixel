@@ -25,7 +25,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub async fn new(window: Arc<dyn Window>) -> Result<Self, Box<dyn Error>> {
+    pub async fn new(window: Arc<Window>) -> Result<Self, Box<dyn Error>> {
         let renderer_device: RendererDevice = RendererDevice::new(window).await?;
         Ok(Self { renderer_device })
     }
@@ -52,7 +52,7 @@ impl Renderer {
                 resolve_target: None,
                 ops: Operations {
                     load: LoadOp::Clear(Color {
-                        r: 0.1,
+                        r: 0.6,
                         g: 0.2,
                         b: 0.3,
                         a: 1.0,

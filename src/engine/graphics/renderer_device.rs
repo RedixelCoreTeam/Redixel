@@ -36,7 +36,7 @@ pub struct RendererDevice {
 }
 
 impl RendererDevice {
-    pub async fn new(window: Arc<dyn Window>) -> Result<Self, Box<dyn Error>> {
+    pub async fn new(window: Arc<Window>) -> Result<Self, Box<dyn Error>> {
         let instance: Instance = Self::create_instance();
         let surface: Surface = Self::create_surface(&instance, &window)?;
 
@@ -61,8 +61,8 @@ impl RendererDevice {
         })
     }
 
-    fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
-        instance.create_surface(window.clone()) // TODO: No need for cloning.
+    fn create_surface(instance: &Instance, window: &Arc<Window>) -> Result<Surface<'static>, CreateSurfaceError> {
+        instance.create_surface(window.clone())
     }
 
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {
@@ -79,7 +79,12 @@ impl RendererDevice {
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: adapter.limits(),
+                required_limits: if cfg!(target_arch = "wasm32") {
+                    wgpu::Limits::downlevel_webgl2_defaults()
+                            .using_resolution(adapter.limits())
+                } else {
+                    wgpu::Limits::default()
+                },
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,
@@ -88,8 +93,8 @@ impl RendererDevice {
             .await
     }
 
-    fn create_surface_config(window: &Arc<dyn Window>, surface: &Surface, adapter: &Adapter) -> SurfaceConfiguration {
-        let size: PhysicalSize<u32> = window.surface_size();
+    fn create_surface_config(window: &Arc<Window>, surface: &Surface, adapter: &Adapter) -> SurfaceConfiguration {
+        let size: PhysicalSize<u32> = window.inner_size();
         let surface_caps: SurfaceCapabilities = surface.get_capabilities(adapter);
 
         let surface_format: TextureFormat = surface_caps
@@ -109,8 +114,8 @@ impl RendererDevice {
         SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width: size.width.max(1),
+            height: size.height.max(1),
             present_mode: surface_present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format],

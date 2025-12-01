@@ -1,12 +1,35 @@
 [package]
 name = "red_pixel"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 env_logger = "0.11.8"
 log = "0.4.28"
 pollster = "0.4.0"
-wgpu = "27.0.1"
-winit = "0.31.0-beta.2"
+wgpu = "27.0.1" 
+winit = "0.30.5"
+cfg-if = "1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.2"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.7"
+console_log = "1.0"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.49"
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Window",
+    "Element",
+    "HtmlCanvasElement",
+    # Add these for better debugging/logging support
+    "console", 
+    "Location" 
+]}
+wgpu = { version = "27.0.1", features = ["webgl"] }

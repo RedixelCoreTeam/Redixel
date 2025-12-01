@@ -39,7 +39,7 @@ impl Runtime {
     pub fn new(proxy: EventLoopProxy<AppEvent>) -> Self {
         Self {
             app_state: AppState::Initializing,
-            proxy: proxy,
+            proxy,
         }
     }
 
@@ -81,7 +81,7 @@ impl ApplicationHandler<AppEvent> for Runtime {
                     // This waits for renderer creation
                     self.app_state = AppState::WaitingForRenderer {
                         window_manager,
-                        input_manager: InputManager::default(),
+                        input_manager: InputManager,
                     };
                 }
                 Err(e) => {

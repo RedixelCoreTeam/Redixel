@@ -32,13 +32,14 @@ type InitResult = Result<(Renderer, WindowManager), String>;
 #[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
-    init_rx: Receiver<InitResult>,
     init_tx: Sender<InitResult>,
+    init_rx: Receiver<InitResult>,
 }
 
 impl Runtime {
     pub fn new() -> Self {
-        let (tx, rx) = channel();
+        let (tx, rx): (Sender<InitResult>, Receiver<InitResult>) = channel();
+
         Self {
             init_rx: rx,
             init_tx: tx,
@@ -58,7 +59,7 @@ impl Runtime {
 
         let window: Arc<dyn Window> = window_manager.get_window();
         let proxy: EventLoopProxy = event_loop.create_proxy();
-        let sender: Sender<Result<(Renderer, WindowManager), String>> = self.init_tx.clone();
+        let sender: Sender<InitResult> = self.init_tx.clone();
 
         let init_future = async move {
             let result: Result<Renderer, Box<dyn Error>> = Renderer::new(window).await;
@@ -89,7 +90,7 @@ impl Runtime {
             match result {
                 Ok((renderer, window_manager)) => {
                     // Request first draw manually, important to force open the window
-                    // There could be a more automatic way, but, for now this is it
+                    // There could be a more automatic way, but, for now this is it.
                     window_manager.request_redraw();
 
                     self.app_state = AppState::Running {
@@ -97,6 +98,7 @@ impl Runtime {
                         window_manager,
                         input_manager: InputManager::new(),
                     };
+
                     println!("RedPixel Engine initialized successfully!");
                 }
                 Err(e) => {

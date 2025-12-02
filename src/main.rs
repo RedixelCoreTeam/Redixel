@@ -1,3 +1,3 @@
 fn main() {
-   red_pixel::init();
+    red_pixel::init();
 }

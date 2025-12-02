@@ -61,6 +61,34 @@ This layout will evolve as more engine systems are introduced.
 The engine is in a very early prototype stage.
 Expect structural changes, experimentation, and reorganization as the architecture matures.
 
+## Run
+
+### Unix and Windows tested
+
+```sh
+cargo run
+```
+
+### Wasm
+
+Install wasm-pack
+
+```sh
+cargo install wasm-pack
+```
+
+Build
+
+```sh
+wasm-pack build --target web
+```
+
+Run
+
+```sh
+python3 -m http.server 8000
+```
+
 ## License
 
 RedPixel is distributed under the terms of the Apache License (Version 2.0).

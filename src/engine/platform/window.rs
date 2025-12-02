@@ -21,19 +21,16 @@ impl WindowManager {
             use web_sys::wasm_bindgen::JsCast;
             use winit::platform::web::WindowAttributesWeb;
 
-            let window = web_sys::window().expect("CRITICAL: Global 'window' object not found.");
-
-            let document = window
-                .document()
-                .expect("CRITICAL: Global 'document' object not found.");
+            let window = web_sys::window().expect("Global 'window' object not found.");
+            let document = window.document().expect("Global 'document' object not found.");
 
             let html_element = document
                 .get_element_by_id("redpixel-canvas")
-                .expect("CRITICAL: Could not find element '#redpixel-canvas' in the DOM.");
+                .expect("Could not find element '#redpixel-canvas' in the DOM.");
 
             let canvas_element = html_element
                 .dyn_into::<web_sys::HtmlCanvasElement>()
-                .expect("CRITICAL: The element '#redpixel-canvas' exists but is NOT a <canvas>.");
+                .expect("The element '#redpixel-canvas' exists but is NOT a <canvas>.");
 
             let web_attributes = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
             attributes = attributes.with_platform_attributes(Box::new(web_attributes));

@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Resize handling that updates surface configuration
   - Presentation of rendered frames
 
+- **Web Assembly (WASM) Support**:
+
+  - Enabled `wasm32-unknown-unknown` target support.
+  - Integrated `wasm-bindgen` for JavaScript interoperability.
+  - Added `console_error_panic_hook` for mapping Rust panics to the browser console.
+  - Enabled `wgpu`'s `webgl` feature flag for broad browser compatibility.
+  - Implemented DOM manipulation logic to attach the `winit` window to the HTML Canvas.
+
 - **Engine module layout** (`engine`, `runtime`, `platform/input`, `platform/window`, `graphics/renderer`, `graphics/renderer_device`).
 - Basic **window creation** with default attributes and fallback error handling.
 - Basic **input processing** pipeline (stub handlers ready for expansion).

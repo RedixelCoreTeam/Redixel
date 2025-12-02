@@ -9,6 +9,7 @@ use wgpu::ExperimentalFeatures;
 use wgpu::Features;
 use wgpu::Instance;
 use wgpu::InstanceDescriptor;
+use wgpu::Limits;
 use wgpu::MemoryHints;
 use wgpu::PowerPreference;
 use wgpu::PresentMode;
@@ -38,7 +39,26 @@ pub struct RendererDevice {
 impl RendererDevice {
     pub async fn new(window: Arc<dyn Window>) -> Result<Self, Box<dyn Error>> {
         let instance: Instance = Self::create_instance();
+
+        #[cfg(not(target_os = "windows"))]
         let surface: Surface = Self::create_surface(&instance, &window)?;
+
+        #[cfg(target_os = "windows")]
+        // Winit's Windows backend explicitly checks thread identity. If `raw_window_handle`
+        // is called outside the event loop thread, it returns `HandleError::Unavailable`
+        // to prevent race conditions (see `winit::platform::windows`).
+        // Since we are initializing on a background thread but can guarantee the window
+        // remains valid during this process, we use `window_handle_any_thread` to
+        // bypass Winit's thread guard and access the raw HWND directly.
+        let surface: Surface = unsafe {
+            use wgpu::SurfaceTargetUnsafe;
+            use wgpu::rwh::HasDisplayHandle;
+            use winit::platform::windows::WindowExtWindows;
+            instance.create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
+                raw_display_handle: window.display_handle()?.as_raw(),
+                raw_window_handle: window.window_handle_any_thread()?.as_raw(),
+            })
+        }?;
 
         let adapter: Adapter = Self::select_adapter(&instance, &surface).await?;
         let (device, queue): (Device, Queue) = Self::create_device(&adapter).await?;
@@ -61,6 +81,7 @@ impl RendererDevice {
         })
     }
 
+    #[allow(dead_code)]
     fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
         instance.create_surface(window.clone()) // TODO: No need for cloning.
     }
@@ -79,7 +100,7 @@ impl RendererDevice {
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: adapter.limits(),
+                required_limits: Self::get_required_limits(adapter),
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,
@@ -109,12 +130,20 @@ impl RendererDevice {
         SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width: size.width.max(1),
+            height: size.height.max(1),
             present_mode: surface_present_mode,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![surface_format],
             desired_maximum_frame_latency: 2,
         }
+    }
+
+    fn get_required_limits(adapter: &Adapter) -> Limits {
+        #[cfg(target_arch = "wasm32")]
+        return wgpu::Limits::downlevel_webgl2_defaults();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        return adapter.limits();
     }
 }

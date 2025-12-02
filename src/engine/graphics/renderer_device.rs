@@ -39,7 +39,26 @@ pub struct RendererDevice {
 impl RendererDevice {
     pub async fn new(window: Arc<dyn Window>) -> Result<Self, Box<dyn Error>> {
         let instance: Instance = Self::create_instance();
+
+        #[cfg(not(target_os = "windows"))]
         let surface: Surface = Self::create_surface(&instance, &window)?;
+
+        #[cfg(target_os = "windows")]
+        // Winit's Windows backend explicitly checks thread identity. If `raw_window_handle`
+        // is called outside the event loop thread, it returns `HandleError::Unavailable`
+        // to prevent race conditions (see `winit::platform::windows`).
+        // Since we are initializing on a background thread but can guarantee the window
+        // remains valid during this process, we use `window_handle_any_thread` to
+        // bypass Winit's thread guard and access the raw HWND directly.
+        let surface: Surface = unsafe {
+            use wgpu::SurfaceTargetUnsafe;
+            use wgpu::rwh::HasDisplayHandle;
+            use winit::platform::windows::WindowExtWindows;
+            instance.create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
+                raw_display_handle: window.display_handle()?.as_raw(),
+                raw_window_handle: window.window_handle_any_thread()?.as_raw(),
+            })
+        }?;
 
         let adapter: Adapter = Self::select_adapter(&instance, &surface).await?;
         let (device, queue): (Device, Queue) = Self::create_device(&adapter).await?;
@@ -62,6 +81,7 @@ impl RendererDevice {
         })
     }
 
+    #[allow(unused)]
     fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
         instance.create_surface(window.clone()) // TODO: No need for cloning.
     }
@@ -77,16 +97,14 @@ impl RendererDevice {
     }
 
     async fn create_device(adapter: &Adapter) -> Result<(Device, Queue), RequestDeviceError> {
-        let limits: Limits = if cfg!(target_arch = "wasm32") {
-            Limits::downlevel_webgl2_defaults()
-        } else {
-            adapter.limits()
-        };
-
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: limits,
+                required_limits: if cfg!(target_arch = "wasm32") {
+                    Limits::downlevel_webgl2_defaults()
+                } else {
+                    adapter.limits()
+                },
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,

@@ -22,22 +22,21 @@
       }
     </style>
   </head>
-
   <body>
     <canvas id="redpixel-canvas"></canvas>
-
     <script type="module">
       import init from './pkg/red_pixel.js';
 
-      async function start() {
+      async function run() {
         try {
           await init();
-        } catch (error) {
-          console.error('Engine crashed:', error);
+          console.info('RedPixel Engine WASM initialized successfully!');
+        } catch (e) {
+          console.error('RedPixel Engine WASM initialization failed', e);
         }
       }
 
-      start();
+      run();
     </script>
   </body>
 </html>

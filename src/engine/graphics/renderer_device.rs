@@ -81,7 +81,7 @@ impl RendererDevice {
         })
     }
 
-    #[allow(unused)]
+    #[allow(dead_code)]
     fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
         instance.create_surface(window.clone()) // TODO: No need for cloning.
     }
@@ -100,11 +100,7 @@ impl RendererDevice {
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: if cfg!(target_arch = "wasm32") {
-                    Limits::downlevel_webgl2_defaults()
-                } else {
-                    adapter.limits()
-                },
+                required_limits: Self::get_required_limits(adapter),
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,
@@ -141,5 +137,13 @@ impl RendererDevice {
             view_formats: vec![surface_format],
             desired_maximum_frame_latency: 2,
         }
+    }
+
+    fn get_required_limits(adapter: &Adapter) -> Limits {
+        #[cfg(target_arch = "wasm32")]
+        return wgpu::Limits::downlevel_webgl2_defaults();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        return adapter.limits();
     }
 }

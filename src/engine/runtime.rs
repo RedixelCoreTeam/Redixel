@@ -89,7 +89,7 @@ impl Runtime {
         if let Ok(result) = self.init_rx.try_recv() {
             match result {
                 Ok((renderer, window_manager)) => {
-                    // Request first draw manually, important to force open the window
+                    // Request first draw manually, important to force open the window.
                     // There could be a more automatic way, but, for now this is it.
                     window_manager.request_redraw();
 

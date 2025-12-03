@@ -100,7 +100,7 @@ impl RendererDevice {
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: Self::get_required_limits(adapter),
+                required_limits: adapter.limits(),
                 memory_hints: MemoryHints::Performance,
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,
@@ -137,13 +137,5 @@ impl RendererDevice {
             view_formats: vec![surface_format],
             desired_maximum_frame_latency: 2,
         }
-    }
-
-    fn get_required_limits(adapter: &Adapter) -> Limits {
-        #[cfg(target_arch = "wasm32")]
-        return wgpu::Limits::downlevel_webgl2_defaults();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        return adapter.limits();
     }
 }

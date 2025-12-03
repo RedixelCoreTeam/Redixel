@@ -9,7 +9,6 @@ use wgpu::ExperimentalFeatures;
 use wgpu::Features;
 use wgpu::Instance;
 use wgpu::InstanceDescriptor;
-use wgpu::Limits;
 use wgpu::MemoryHints;
 use wgpu::PowerPreference;
 use wgpu::PresentMode;
@@ -89,7 +88,7 @@ impl RendererDevice {
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {
         instance
             .request_adapter(&RequestAdapterOptions {
-                power_preference: PowerPreference::HighPerformance,
+                power_preference: PowerPreference::default(),
                 compatible_surface: Some(surface),
                 force_fallback_adapter: false,
             })
@@ -101,10 +100,10 @@ impl RendererDevice {
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
                 required_limits: adapter.limits(),
-                memory_hints: MemoryHints::Performance,
+                memory_hints: MemoryHints::default(),
                 label: Some("REDPIXEL_DEVICE"),
                 trace: Trace::Off,
-                experimental_features: ExperimentalFeatures::disabled(),
+                experimental_features: ExperimentalFeatures::default(),
             })
             .await
     }

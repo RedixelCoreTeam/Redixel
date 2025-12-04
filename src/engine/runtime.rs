@@ -140,13 +140,15 @@ impl ApplicationHandler for Runtime {
                 WindowEvent::RedrawRequested => {
                     match renderer.render() {
                         Ok(_) => {}
-                        // A timeout is usually transient (e.g., frame took too long). 
+                        // A timeout is usually transient (e.g., frame took too long).
                         //Just silently skip the frame and it is ok.
-                        Err(wgpu::SurfaceError::Timeout) => {},
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => renderer.resize(window_manager.get_window().surface_size()),
+                        Err(wgpu::SurfaceError::Timeout) => {}
+                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                            renderer.resize(window_manager.get_window().surface_size())
+                        }
                         Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),
                         Err(e) => log::error!("Render error: {:?}", e),
-                    }
+                    };
 
                     window_manager.request_redraw();
                 }

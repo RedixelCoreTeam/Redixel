@@ -1,4 +1,4 @@
-# Redixel Engine (Work in Progress)
+# Redixel (Work in Progress)
 
 Redixel is an experimental 2D game engine written in Rust.
 The goal of this project is to build a clean, modular, and scalable engine architecture from scratch, adhering to strict software engineering standards and modern Rust best practices.

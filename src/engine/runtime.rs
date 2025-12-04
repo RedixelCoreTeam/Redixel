@@ -99,7 +99,7 @@ impl Runtime {
                         input_manager: InputManager::new(),
                     };
 
-                    println!("Redixel Engine initialized successfully!");
+                    println!("Redixel initialized successfully!");
                 }
                 Err(e) => {
                     eprintln!("Redixel Runtime Initialization failed: {e}");

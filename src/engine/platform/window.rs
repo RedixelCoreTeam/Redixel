@@ -14,7 +14,7 @@ pub struct WindowManager {
 impl WindowManager {
     pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RequestError> {
         #[allow(unused_mut)]
-        let mut attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel Engine");
+        let mut attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel");
 
         #[cfg(target_arch = "wasm32")]
         {

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Initial project structure for the **RedPixel Engine**.
+- Initial project structure for the **Redixel Engine**.
 - Engine bootstrap (`main.rs`, `lib.rs`) with `red_pixel::init()` entry point.
 - **Runtime system** implementing `winit::ApplicationHandler`, orchestrating:
 

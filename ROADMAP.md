@@ -1,4 +1,4 @@
-# **RedPixel Engine Roadmap**
+# **Redixel Engine Roadmap**
 
 ## **Phase 1 — Foundation & Lifecycle**
 **Goal:** Establish the OS communication and main loop.

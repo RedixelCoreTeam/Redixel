@@ -14,7 +14,7 @@ pub struct WindowManager {
 impl WindowManager {
     pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RequestError> {
         #[allow(unused_mut)]
-        let mut attributes: WindowAttributes = WindowAttributes::default().with_title("RedPixel Engine");
+        let mut attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel Engine");
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -25,12 +25,12 @@ impl WindowManager {
             let document = window.document().expect("Global 'document' object not found.");
 
             let html_element = document
-                .get_element_by_id("redpixel-canvas")
-                .expect("Could not find element '#redpixel-canvas' in the DOM.");
+                .get_element_by_id("redixel-canvas")
+                .expect("Could not find element '#redixel-canvas' in the DOM.");
 
             let canvas_element = html_element
                 .dyn_into::<web_sys::HtmlCanvasElement>()
-                .expect("The element '#redpixel-canvas' exists but is NOT a <canvas>.");
+                .expect("The element '#redixel-canvas' exists but is NOT a <canvas>.");
 
             let web_attributes = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
             attributes = attributes.with_platform_attributes(Box::new(web_attributes));

@@ -99,10 +99,10 @@ impl Runtime {
                         input_manager: InputManager::new(),
                     };
 
-                    println!("RedPixel Engine initialized successfully!");
+                    println!("Redixel Engine initialized successfully!");
                 }
                 Err(e) => {
-                    eprintln!("RedPixel Runtime Initialization failed: {e}");
+                    eprintln!("Redixel Runtime Initialization failed: {e}");
                     self.app_state = AppState::Error;
                 }
             }

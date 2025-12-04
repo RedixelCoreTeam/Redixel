@@ -101,7 +101,7 @@ impl RendererDevice {
                 required_features: Features::empty(),
                 required_limits: adapter.limits(),
                 memory_hints: MemoryHints::default(),
-                label: Some("REDPIXEL_DEVICE"),
+                label: Some("REDIXEL_DEVICE"),
                 trace: Trace::Off,
                 experimental_features: ExperimentalFeatures::default(),
             })

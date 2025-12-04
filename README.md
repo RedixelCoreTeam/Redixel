@@ -1,6 +1,6 @@
-# RedPixel Engine (Work in Progress)
+# Redixel (Work in Progress)
 
-RedPixel is an experimental 2D game engine written in Rust.
+Redixel is an experimental 2D game engine written in Rust.
 The goal of this project is to build a clean, modular, and scalable engine architecture from scratch, adhering to strict software engineering standards and modern Rust best practices.
 
 ## Tech Stack
@@ -91,6 +91,6 @@ python3 -m http.server 8000
 
 ## License
 
-RedPixel is distributed under the terms of the Apache License (Version 2.0).
+Redixel is distributed under the terms of the Apache License (Version 2.0).
 
 See [LICENSE](LICENSE) for details.

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RedPixel Engine</title>
+    <title>Redixel</title>
 
     <style>
       html,
@@ -23,16 +23,16 @@
     </style>
   </head>
   <body>
-    <canvas id="redpixel-canvas"></canvas>
+    <canvas id="redixel-canvas"></canvas>
     <script type="module">
       import init from './pkg/red_pixel.js';
 
       async function run() {
         try {
           await init();
-          console.info('RedPixel Engine WASM initialized successfully!');
+          console.info('Redixel WASM initialized successfully!');
         } catch (e) {
-          console.error('RedPixel Engine WASM initialization failed', e);
+          console.error('Redixel WASM initialization failed', e);
         }
       }
 

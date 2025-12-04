@@ -9,7 +9,6 @@ use wgpu::ExperimentalFeatures;
 use wgpu::Features;
 use wgpu::Instance;
 use wgpu::InstanceDescriptor;
-use wgpu::Limits;
 use wgpu::MemoryHints;
 use wgpu::PowerPreference;
 use wgpu::PresentMode;
@@ -89,7 +88,7 @@ impl RendererDevice {
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {
         instance
             .request_adapter(&RequestAdapterOptions {
-                power_preference: PowerPreference::HighPerformance,
+                power_preference: PowerPreference::default(),
                 compatible_surface: Some(surface),
                 force_fallback_adapter: false,
             })
@@ -100,11 +99,11 @@ impl RendererDevice {
         adapter
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
-                required_limits: Self::get_required_limits(adapter),
-                memory_hints: MemoryHints::Performance,
-                label: Some("REDPIXEL_DEVICE"),
+                required_limits: adapter.limits(),
+                memory_hints: MemoryHints::default(),
+                label: Some("REDIXEL_DEVICE"),
                 trace: Trace::Off,
-                experimental_features: ExperimentalFeatures::disabled(),
+                experimental_features: ExperimentalFeatures::default(),
             })
             .await
     }
@@ -137,13 +136,5 @@ impl RendererDevice {
             view_formats: vec![surface_format],
             desired_maximum_frame_latency: 2,
         }
-    }
-
-    fn get_required_limits(adapter: &Adapter) -> Limits {
-        #[cfg(target_arch = "wasm32")]
-        return wgpu::Limits::downlevel_webgl2_defaults();
-
-        #[cfg(not(target_arch = "wasm32"))]
-        return adapter.limits();
     }
 }

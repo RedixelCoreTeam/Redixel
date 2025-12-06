@@ -99,16 +99,16 @@ cargo run
 ## Roadmap
 
 The project is currently in **Phase 1 (Foundation & Lifecycle)**.
-For a detailed breakdown of upcoming features, including Batch Rendering, ECS, and Physics, please refer to the [ROADMAP](ROADMAP).
+For a detailed breakdown of upcoming features, including Batch Rendering, ECS, and Physics, please refer to the [ROADMAP](./ROADMAP.md).
 
 ## Contributing
 
-To maintain architectural integrity, we enforce strict coding standards and a specific development workflow. Please read our [CONTRIBUTING](CONTRIBUTING) guide before opening a Merge Request.
+To maintain architectural integrity, we enforce strict coding standards and a specific development workflow. Please read our [CONTRIBUTING](./CONTRIBUTING.md) guide before opening a Merge Request.
 
 ## License
 
 Redixel is distributed under the terms of the Apache License (Version 2.0).
 
-See [LICENSE](LICENSE) for details.
+See [LICENSE](./LICENSE) for details.
 
 Copyright 2025 Redixel Core Team.

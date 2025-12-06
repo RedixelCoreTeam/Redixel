@@ -2,16 +2,18 @@
 
 ## **Phase 1 — Foundation & Lifecycle**
 
-**Goal:** Establish the OS communication and main loop.
+**Goal:** Establish the OS communication, main loop, user entry point, and platform stability.
 
-- [x] Project structure (Workspace/Modules).
-- [x] Window creation.
-- [x] Renderer module.
-- [ ] Event Loop (Polling, Control Flow).
-- [ ] Time Management (Delta Time, FPS Accumulator).
-- [ ] Strict Error Handling.
-- [ ] Logging.
-- [ ] Continuous Performance Benchmarking (CI-based FPS Regression Checks). _(Optional)_
+- [x] **Project Structure:** Established the library/binary separation and module hierarchy (`engine`, `platform`, `graphics`) to support future expansion.
+- [x] **Window Creation:** Implemented `WindowManager` with `winit` to handle OS events and cross-platform window initialization (Native/WASM).
+- [x] **Renderer Module:** Initialized the `wgpu` context (Instance, Surface, Device) and established the basic Clear Color render pass.
+- [ ] **Error Handling:** Unified system (`RedixelError`) and graceful propagation (Main/WASM).
+- [ ] **Time Management:** Delta Time calculation and FPS Counter.
+- [ ] **Game Loop & User API:** Implement `Game` trait (`on_update`, `on_render`) and `Context`.
+- [ ] **Basic Input & Window Control:** Handle Exit (ESC/Close), Fullscreen toggle, and Cleanup.
+- [ ] **Logging:** Standardize logs across the engine (`log` crate).
+- [ ] **Testing Infrastructure:** Establish unit testing patterns and ensure core logic (Time, Config) is covered by `cargo test`.
+- [ ] **Engine Configuration:** Startup settings struct (Window title, Resolution, VSync, Backend).
 
 ## **Phase 2 — The Graphics Core**
 

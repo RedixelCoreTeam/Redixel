@@ -1,96 +1,114 @@
-# Redixel (Work in Progress)
+# Redixel
 
-Redixel is an experimental 2D game engine written in Rust.
-The goal of this project is to build a clean, modular, and scalable engine architecture from scratch, adhering to strict software engineering standards and modern Rust best practices.
+Redixel is a high-performance, strict 2D game engine written in Rust.
 
-## Tech Stack
+The primary goal of this project is to build a clean, modular, and scalable engine architecture from scratch. It enforces strict software engineering standards—such as unidirectional data flow and strong layer separation—to prevent the technical debt common in growing game engines.
 
-- **Language:** Rust
-- **Windowing:** Winit (Event Loop & Platform Abstraction)
-- **Graphics:** WGPU (WebGPU implementation for Vulkan/Metal/DX12)
+## Technology Stack
+
+Redixel is built on top of the modern Rust ecosystem, prioritizing safety and cross-platform compatibility (Desktop & Web).
+
+| Component        | Technology  | Description                                                            |
+| :--------------- | :---------- | :--------------------------------------------------------------------- |
+| **Language**     | Rust (2024) | Memory safety and performance without garbage collection.              |
+| **Windowing**    | Winit       | Event loop management and low-level platform abstraction.              |
+| **Graphics**     | WGPU        | Portable graphics API targeting Vulkan, Metal, DX12, and WebGL/WebGPU. |
+| **Build System** | Cargo       | Standard Rust package manager and build tool.                          |
 
 ## Architecture
 
-The engine uses a strict layered architecture to separate concerns. No circular dependencies are allowed between layers.
+The engine adheres to a strict **Layered Architecture**. Dependencies flow downwards; circular dependencies between layers are strictly forbidden to ensure modularity.
 
-### 1. Runtime Layer (`runtime.rs`)
+### 1\. Runtime Layer (`runtime.rs`)
 
-The "Brain" of the engine. It implements the Winit `ApplicationHandler` trait.
+The "Brain" of the engine. It implements the `winit::ApplicationHandler` trait.
 
-- **Responsibility:** Orchestrates the lifecycle (Start, Update, Render, Stop).
-- **Behavior:** Owns the sub-systems and manages the flow of data between them.
+- **Responsibility:** Orchestrates the entire application lifecycle (Initialization, Update Loop, Render Loop, Shutdown).
+- **Behavior:** Owns the sub-systems and manages the flow of data between the Platform and Graphics layers.
 
-### 2. Platform Layer (`platform/`)
+### 2\. Platform Layer (`platform/`)
 
-Abstracts the Operating System specifics.
+Abstracts Operating System specifics, ensuring the core engine remains platform-agnostic.
 
-- **Window Manager:** Handles window creation, lifecycle events, and safe suspension/resumption.
-- **Input Manager:** Decouples raw Winit events from game logic (sanitizes input).
+- **Window Manager:** Handles window creation, lifecycle events, DPI scaling, and safe suspension/resumption.
+- **Input Manager:** Decouples raw Winit events from game logic, sanitizing input data.
 
-### 3. Graphics Layer (`graphics/`)
+### 3\. Graphics Layer (`graphics/`)
 
-Abstracts the GPU hardware.
+Abstracts the GPU hardware via WGPU.
 
 - **Renderer:** Encapsulates the WGPU Instance, Surface, Device, Queue, and Render Pipeline.
-- **Current Capability:** Basic render pass with hardcoded geometry (Hardware check).
+- **Capability:** Manages the swapchain, render passes, and command encoding.
 
 ## Directory Structure
-
-The project follows the "Sibling Module" pattern to keep the file tree clean.
 
 ```text
 src/
 ├── engine/
-│   ├── graphics/           # GPU interaction layer
-│   │   └── renderer.rs     # WGPU Context & Render Pipeline
-│   ├── platform/           # OS interaction layer
-│   │   ├── input.rs        # Input event sanitization
-│   │   └── window.rs       # Window lifecycle management
-│   ├── graphics.rs         # Module definition for graphics
-│   ├── platform.rs         # Module definition for platform
-│   └── runtime.rs          # Main Application Handler (The Engine Loop)
-├── engine.rs               # Engine library root
-├── lib.rs                  # Library entry point (init)
-└── main.rs                 # Binary entry point (bootstrapping)
+│   ├── graphics/               # GPU interaction layer
+│   │   ├── renderer.rs         # Frame rendering & Command encoding
+│   │   ├── renderer_device.rs  # WGPU Device, Queue & Surface initialization
+│   │   └── mod.rs              # Graphics module definitions
+│   ├── platform/               # OS interaction layer
+│   │   ├── input.rs            # Input event sanitization
+│   │   ├── window.rs           # Window lifecycle management
+│   │   └── mod.rs              # Platform module definitions
+│   ├── mod.rs                  # Engine module definitions
+│   └── runtime.rs              # Main Application Handler (The Engine Loop)
+├── lib.rs                      # Library entry point (init)
+└── main.rs                     # Binary entry point (bootstrapping)
 ```
 
-This layout will evolve as more engine systems are introduced.
+## Getting Started
 
-## Project Status
+### Prerequisites
 
-The engine is in a very early prototype stage.
-Expect structural changes, experimentation, and reorganization as the architecture matures.
+- Rust Toolchain (Stable)
+- Python 3 (Optional, for hosting the Web build)
 
-## Run
+### Running Native (Windows/Linux/macOS)
 
-### Unix and Windows tested
+To run the engine on your local machine:
 
 ```sh
 cargo run
 ```
 
-### Wasm
+### Running on Web (WASM)
 
-Install wasm-pack
+1.  **Install wasm-pack:**
 
-```sh
-cargo install wasm-pack
-```
+    ```sh
+    cargo install wasm-pack
+    ```
 
-Build
+2.  **Build for the web target:**
 
-```sh
-wasm-pack build --target web
-```
+    ```sh
+    wasm-pack build --target web
+    ```
 
-Run
+3.  **Serve the application:**
 
-```sh
-python3 -m http.server 8000
-```
+    ```sh
+    python3 -m http.server 8000
+    ```
+
+    Open your browser at `http://localhost:8000`.
+
+## Roadmap
+
+The project is currently in **Phase 1 (Foundation & Lifecycle)**.
+For a detailed breakdown of upcoming features, including Batch Rendering, ECS, and Physics, please refer to the [ROADMAP](ROADMAP).
+
+## Contributing
+
+To maintain architectural integrity, we enforce strict coding standards and a specific development workflow. Please read our [CONTRIBUTING](CONTRIBUTING) guide before opening a Merge Request.
 
 ## License
 
 Redixel is distributed under the terms of the Apache License (Version 2.0).
 
 See [LICENSE](LICENSE) for details.
+
+Copyright 2025 Redixel Core Team.

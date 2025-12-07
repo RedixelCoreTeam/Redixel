@@ -17,6 +17,7 @@ use super::error::SharedError;
 use super::graphics::renderer::Renderer;
 use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
+use super::core::time::fps::FpsTracker;
 
 #[derive(Debug)]
 pub enum AppState {
@@ -26,6 +27,7 @@ pub enum AppState {
         renderer: Renderer,
         input_manager: InputManager,
         window_manager: WindowManager,
+        fps_tracker: FpsTracker,
     },
 }
 
@@ -95,11 +97,16 @@ impl Runtime {
             // Request first draw manually, important to force open the window.
             // There could be a more automatic way, but, for now this is it.
             window_manager.request_redraw();
+            
+            // Initializing fps tracker
+            let mut fps_tracker: FpsTracker = FpsTracker::new();
+            fps_tracker.set_target_fps(60); // TODO: fps hardcoded, create a settings manager
 
             self.app_state = AppState::Running {
                 renderer,
                 window_manager,
                 input_manager: InputManager::new(),
+                fps_tracker,
             };
 
             log::info!("Step 3/3: Redixel Engine is Running!");
@@ -142,8 +149,10 @@ impl ApplicationHandler for Runtime {
                 input_manager,
                 window_manager,
                 renderer,
+                fps_tracker,
             } => match event {
                 WindowEvent::RedrawRequested => {
+                    fps_tracker.begin_frame();
                     match renderer.render() {
                         // Frame submitted successfully; no further control flow needed.
                         Ok(_) => {}
@@ -167,8 +176,9 @@ impl ApplicationHandler for Runtime {
                             event_loop.exit();
                         }
                     };
-
+                    fps_tracker.end_frame();
                     window_manager.request_redraw();
+                    println!("FPS: {:.2}", fps_tracker.fps);
                 }
 
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),
@@ -176,7 +186,7 @@ impl ApplicationHandler for Runtime {
                 event if input_manager.is_input_event(&event) => input_manager.handle_input_event(&event),
                 event if window_manager.is_window_event(&event) => window_manager.handle_window_event(&event),
                 _ => {}
-            },
+            }
         }
     }
 }

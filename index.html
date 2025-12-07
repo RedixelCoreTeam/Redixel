@@ -28,12 +28,7 @@
       import init from './pkg/red_pixel.js';
 
       async function run() {
-        try {
-          await init();
-          console.info('Redixel WASM initialized successfully!');
-        } catch (e) {
-          console.error('Redixel WASM initialization failed', e);
-        }
+        await init();
       }
 
       run();

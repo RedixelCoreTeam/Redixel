@@ -100,7 +100,7 @@ impl Runtime {
 
             // Initializing fps tracker
             let mut fps_tracker: FpsTracker = FpsTracker::new();
-            fps_tracker.set_target_fps(60); // TODO: fps hardcoded, create a settings manager
+            fps_tracker.set_target_fps(60); // TODO: fps hardcoded, create AppSettings
 
             self.app_state = AppState::Running {
                 renderer: Box::new(renderer),
@@ -178,7 +178,6 @@ impl ApplicationHandler for Runtime {
                     };
                     fps_tracker.end_frame();
                     window_manager.request_redraw();
-                    println!("FPS: {:.2}", fps_tracker.fps);
                 }
 
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),

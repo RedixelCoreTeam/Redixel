@@ -51,22 +51,15 @@ impl Runtime {
         }
     }
 
-    fn capture_error(error_sink: &SharedError, e: RedixelError) {
-        *error_sink.borrow_mut() = Some(e)
+    fn capture_fatal_error(error_sink: &SharedError, error: RedixelError) {
+        log::error!("Fatal Error: {error}");
+        *error_sink.borrow_mut() = Some(error);
     }
 
-    fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) {
-        println!("Step 1/3: Bootstrapping Window System...");
+    fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), RedixelError> {
+        log::info!("Step 1/3: Bootstrapping Window System...");
 
-        let window_manager: WindowManager = match WindowManager::new(event_loop) {
-            Ok(window_manager) => window_manager,
-            Err(e) => {
-                Self::capture_error(&self.error_sink, e);
-                event_loop.exit();
-                return;
-            }
-        };
-
+        let window_manager: WindowManager = WindowManager::new(event_loop)?;
         let sender: Sender<RuntimeBridgeResult> = self.async_bridge_tx.clone();
         let window: Arc<dyn Window> = window_manager.get_window();
         let proxy: EventLoopProxy = event_loop.create_proxy();
@@ -91,50 +84,60 @@ impl Runtime {
         std::thread::spawn(move || pollster::block_on(init_future));
 
         self.app_state = AppState::Loading;
+
+        Ok(())
     }
 
-    fn complete_initialization(&mut self, event_loop: &dyn ActiveEventLoop) {
+    fn complete_initialization(&mut self) -> Result<(), RedixelError> {
         if let Ok(result) = self.async_bridge_rx.try_recv() {
-            match result {
-                Ok((renderer, window_manager)) => {
-                    // Request first draw manually, important to force open the window.
-                    // There could be a more automatic way, but, for now this is it.
-                    window_manager.request_redraw();
+            let (renderer, window_manager): (Renderer, WindowManager) = result?;
 
-                    self.app_state = AppState::Running {
-                        renderer,
-                        window_manager,
-                        input_manager: InputManager::new(),
-                    };
+            // Request first draw manually, important to force open the window.
+            // There could be a more automatic way, but, for now this is it.
+            window_manager.request_redraw();
 
-                    println!("Step 3/3: RedPixel Engine is Running!");
-                }
-                Err(e) => {
-                    Self::capture_error(&self.error_sink, e);
-                    event_loop.exit();
-                }
-            }
+            self.app_state = AppState::Running {
+                renderer,
+                window_manager,
+                input_manager: InputManager::new(),
+            };
+
+            log::info!("Step 3/3: Redixel Engine is Running!");
         }
+
+        Ok(())
     }
 }
 
 impl ApplicationHandler for Runtime {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
-        if matches!(self.app_state, AppState::Initializing) {
-            self.start_initialization(event_loop);
+        log::info!("Initializing Redixel Engine.");
+
+        if !matches!(self.app_state, AppState::Initializing) {
+            return;
+        }
+
+        if let Err(e) = self.start_initialization(event_loop) {
+            Self::capture_fatal_error(&self.error_sink, e);
+            event_loop.exit();
         }
     }
 
     fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
-        if matches!(self.app_state, AppState::Loading) {
-            self.complete_initialization(event_loop);
+        if !matches!(self.app_state, AppState::Loading) {
+            return;
         }
+
+        if let Err(e) = self.complete_initialization() {
+            Self::capture_fatal_error(&self.error_sink, e);
+            event_loop.exit();
+        };
     }
 
     fn window_event(&mut self, event_loop: &dyn ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match &mut self.app_state {
             AppState::Initializing => {}
-            AppState::Loading => println!("Step 2/3: Awaiting Graphics Context (WGPU)..."),
+            AppState::Loading => log::info!("Step 2/3: Awaiting Graphics Context..."),
             AppState::Running {
                 input_manager,
                 window_manager,
@@ -155,12 +158,12 @@ impl ApplicationHandler for Runtime {
                         }
 
                         Err(e @ RedixelError::Surface(SurfaceError::OutOfMemory)) => {
-                            Self::capture_error(&self.error_sink, e);
+                            Self::capture_fatal_error(&self.error_sink, e);
                             event_loop.exit();
                         }
 
                         Err(e) => {
-                            Self::capture_error(&self.error_sink, e);
+                            Self::capture_fatal_error(&self.error_sink, e);
                             event_loop.exit();
                         }
                     };

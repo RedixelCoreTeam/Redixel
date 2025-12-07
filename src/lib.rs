@@ -17,19 +17,23 @@ use wasm_bindgen::prelude::*;
 #[allow(dead_code)]
 #[cfg(not(target_arch = "wasm32"))]
 fn setup_logging() {
-    env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("red_pixel::engine::runtime")).init();
 }
 
 // Web logging (WASM)
 #[cfg(target_arch = "wasm32")]
-fn setup_logging() {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    console_log::init_with_level(log::Level::Warn).expect("Failed to initialize WASM logger");
+fn setup_logging() -> Result<(), RedixelError> {
+    console_log::init_with_level(log::Level::Info)?;
+    Ok(())
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn init() -> Result<(), RedixelError> {
+    #[cfg(not(target_arch = "wasm32"))]
     setup_logging();
+
+    #[cfg(target_arch = "wasm32")]
+    setup_logging()?;
 
     let error_sink: SharedError = Rc::new(RefCell::new(None));
     let event_loop: EventLoop = EventLoop::new()?;

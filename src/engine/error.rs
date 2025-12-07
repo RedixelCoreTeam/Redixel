@@ -12,6 +12,9 @@ use winit::error::EventLoopError;
 use winit::error::RequestError;
 
 #[cfg(target_arch = "wasm32")]
+use log::SetLoggerError;
+
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
 
 use thiserror::Error;
@@ -41,6 +44,10 @@ pub enum RedixelError {
 
     #[error("Graphics surface error: {0}")]
     Surface(#[from] SurfaceError),
+
+    #[cfg(target_arch = "wasm32")]
+    #[error("Failed to initialize logger: {0}")]
+    LoggerError(#[from] SetLoggerError),
 
     #[cfg(target_arch = "wasm32")]
     #[error("JavaScript Exception: {0:?}")]

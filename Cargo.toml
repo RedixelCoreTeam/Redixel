@@ -19,4 +19,4 @@ thiserror = "2"
 log = "0.4.28"
 pollster = "0.4.0"
 winit = "0.31.0-beta.2"
-wgpu = { version = "27.0.1", features = ["webgl"] }
+wgpu = "27.0.1"

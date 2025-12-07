@@ -12,19 +12,19 @@ use winit::window::WindowId;
 
 use wgpu::SurfaceError;
 
+use super::core::time::fps::FpsTracker;
 use super::error::RedixelError;
 use super::error::SharedError;
 use super::graphics::renderer::Renderer;
 use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
-use super::core::time::fps::FpsTracker;
 
 #[derive(Debug)]
 pub enum AppState {
     Loading,
     Initializing,
     Running {
-        renderer: Renderer,
+        renderer: Box<Renderer>,
         input_manager: InputManager,
         window_manager: WindowManager,
         fps_tracker: FpsTracker,
@@ -97,13 +97,13 @@ impl Runtime {
             // Request first draw manually, important to force open the window.
             // There could be a more automatic way, but, for now this is it.
             window_manager.request_redraw();
-            
+
             // Initializing fps tracker
             let mut fps_tracker: FpsTracker = FpsTracker::new();
             fps_tracker.set_target_fps(60); // TODO: fps hardcoded, create a settings manager
 
             self.app_state = AppState::Running {
-                renderer,
+                renderer: Box::new(renderer),
                 window_manager,
                 input_manager: InputManager::new(),
                 fps_tracker,
@@ -186,7 +186,7 @@ impl ApplicationHandler for Runtime {
                 event if input_manager.is_input_event(&event) => input_manager.handle_input_event(&event),
                 event if window_manager.is_window_event(&event) => window_manager.handle_window_event(&event),
                 _ => {}
-            }
+            },
         }
     }
 }

@@ -1,5 +1,5 @@
-use std::time::{Instant, Duration};
 use std::thread;
+use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub struct FpsTracker {
@@ -22,7 +22,7 @@ impl FpsTracker {
     }
 
     // Updates the target frame rate.
-    // 
+    //
     // If `target_fps` is 0, the limit is removed (unlimited FPS).
     // This automatically calculates the target duration in nanoseconds.
     //
@@ -32,20 +32,19 @@ impl FpsTracker {
     pub fn set_target_fps(&mut self, target_fps: u32) {
         if target_fps > 0 {
             self.frame_target_duration = 1_000_000_000 / target_fps as u128;
-        } 
-        else {
-            self.frame_target_duration =  0;
+        } else {
+            self.frame_target_duration = 0;
         }
     }
 
     // Call at the **start of the frame**
-    // 
+    //
     pub fn begin_frame(&mut self) {
         self.frame_start_time = Instant::now();
     }
 
     // Call this at the very **end** of your game loop (after `present()`).
-    // 
+    //
     // Details:
     // - Updates the `fps` every frame
     // - Sleeps/Waits to limit the target FPS (if set).
@@ -57,11 +56,11 @@ impl FpsTracker {
         if delta_frame_time > 0 {
             self.fps = 1_000_000_000.0 / (delta_frame_time as f64);
         }
-        
+
         if self.frame_target_duration == 0 {
             return;
         }
-        
+
         // FPS limit
         let elapsed: u128 = self.frame_start_time.elapsed().as_nanos();
         if elapsed < self.frame_target_duration {
@@ -74,7 +73,7 @@ impl FpsTracker {
             // Spin wait for 1.5 ms at maximum for the final precision (burns CPU but is accurate)
             while self.frame_start_time.elapsed().as_nanos() < self.frame_target_duration {
                 // distinct hint to the processor that we are spinning
-                std::hint::spin_loop(); 
+                std::hint::spin_loop();
             }
         }
     }

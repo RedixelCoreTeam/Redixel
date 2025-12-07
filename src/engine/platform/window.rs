@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use winit::error::RequestError;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::Window;
 use winit::window::WindowAttributes;
+
+use crate::engine::error::RedixelError;
 
 #[derive(Debug)]
 pub struct WindowManager {
@@ -12,27 +13,35 @@ pub struct WindowManager {
 }
 
 impl WindowManager {
-    pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RequestError> {
+    pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RedixelError> {
         #[allow(unused_mut)]
         let mut attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel");
 
         #[cfg(target_arch = "wasm32")]
         {
+            use web_sys::Document;
+            use web_sys::Element;
+            use web_sys::HtmlCanvasElement;
+            use web_sys::Window;
             use web_sys::wasm_bindgen::JsCast;
             use winit::platform::web::WindowAttributesWeb;
 
-            let window = web_sys::window().expect("Global 'window' object not found.");
-            let document = window.document().expect("Global 'document' object not found.");
+            let window: Window =
+                web_sys::window().ok_or_else(|| RedixelError::JsException("Global 'window' object not found."))?;
 
-            let html_element = document
+            let document: Document = window
+                .document()
+                .ok_or_else(|| RedixelError::JsException("Global 'document' object not found."))?;
+
+            let html_element: Element = document
                 .get_element_by_id("redixel-canvas")
-                .expect("Could not find element '#redixel-canvas' in the DOM.");
+                .ok_or_else(|| RedixelError::JsException("Could not find element '#redixel-canvas' in the DOM."))?;
 
-            let canvas_element = html_element
-                .dyn_into::<web_sys::HtmlCanvasElement>()
-                .expect("The element '#redixel-canvas' exists but is NOT a <canvas>.");
+            let canvas_element: HtmlCanvasElement = html_element.dyn_into::<HtmlCanvasElement>().map_err(|_| {
+                RedixelError::JsException("The element '#redixel-canvas' exists but is NOT a <canvas>.")
+            })?;
 
-            let web_attributes = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
+            let web_attributes: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
             attributes = attributes.with_platform_attributes(Box::new(web_attributes));
         }
 
@@ -47,7 +56,7 @@ impl WindowManager {
 
     pub fn handle_window_event(&self, event: &WindowEvent) {
         match event {
-            WindowEvent::Focused(..) => {}
+            WindowEvent::Focused(_) => {}
             WindowEvent::ScaleFactorChanged { .. } => {}
             _ => {}
         }
@@ -58,6 +67,6 @@ impl WindowManager {
     }
 
     pub fn is_window_event(&self, event: &WindowEvent) -> bool {
-        matches!(event, WindowEvent::Focused { .. } | WindowEvent::ScaleFactorChanged { .. })
+        matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
     }
 }

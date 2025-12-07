@@ -96,6 +96,33 @@ cargo run
 
     Open your browser at `http://localhost:8000`.
 
+### ⚠️ WebGPU on Linux (Chromium-based browsers)
+
+On Linux, **WebGPU is not fully enabled by default** on Chrome, Edge, Chromium, Opera, or Brave.
+As documented in the official GPUWeb Implementation Status, Linux support is **behind flags**.
+
+To run Redixel with WebGPU enabled on Linux, launch your browser with:
+
+```sh
+microsoft-edge \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+Or for Chrome/Chromium:
+
+```sh
+google-chrome \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+> Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
+
 ## Roadmap
 
 The project is currently in **Phase 1 (Foundation & Lifecycle)**.

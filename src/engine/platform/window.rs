@@ -24,7 +24,6 @@ impl WindowManager {
             use web_sys::HtmlCanvasElement;
             use web_sys::Window;
             use web_sys::wasm_bindgen::JsCast;
-
             use winit::platform::web::WindowAttributesWeb;
 
             let window: Window =

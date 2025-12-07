@@ -1,8 +1,13 @@
 mod engine;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use winit::event_loop::ControlFlow;
 use winit::event_loop::EventLoop;
 
+use engine::error::RedixelError;
+use engine::error::SharedError;
 use engine::runtime::Runtime;
 
 #[cfg(target_arch = "wasm32")]
@@ -23,9 +28,16 @@ fn setup_logging() {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn init() {
+pub fn init() -> Result<(), RedixelError> {
     setup_logging();
-    let event_loop: EventLoop = EventLoop::new().expect("Couldn't create EventLoop");
+
+    let error_sink: SharedError = Rc::new(RefCell::new(None));
+    let event_loop: EventLoop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);
-    event_loop.run_app(Runtime::new()).expect("Couldn't run app EventLoop");
+    event_loop.run_app(Runtime::new(error_sink.clone()))?;
+
+    match error_sink.borrow_mut().take() {
+        Some(e) => Err(e),
+        None => Ok(()),
+    }
 }

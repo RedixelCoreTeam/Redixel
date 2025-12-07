@@ -1,3 +1,5 @@
 fn main() {
-    red_pixel::init();
+    if let Err(e) = red_pixel::init() {
+        println!("Redixel Engine Initialization Failed {e}")
+    }
 }

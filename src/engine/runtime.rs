@@ -1,8 +1,7 @@
-use std::error::Error;
 use std::sync::Arc;
+use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
-use std::sync::mpsc::channel;
 
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
@@ -11,15 +10,18 @@ use winit::event_loop::EventLoopProxy;
 use winit::window::Window;
 use winit::window::WindowId;
 
+use wgpu::SurfaceError;
+
+use super::error::RedixelError;
+use super::error::SharedError;
 use super::graphics::renderer::Renderer;
 use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
 
 #[derive(Debug)]
-enum AppState {
-    Initializing,
+pub enum AppState {
     Loading,
-    Error,
+    Initializing,
     Running {
         renderer: Renderer,
         input_manager: InputManager,
@@ -27,49 +29,55 @@ enum AppState {
     },
 }
 
-type InitResult = Result<(Renderer, WindowManager), String>;
+type RuntimeBridgeResult = Result<(Renderer, WindowManager), RedixelError>;
 
 #[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
-    init_tx: Sender<InitResult>,
-    init_rx: Receiver<InitResult>,
+    error_sink: SharedError,
+    async_bridge_tx: Sender<RuntimeBridgeResult>,
+    async_bridge_rx: Receiver<RuntimeBridgeResult>,
 }
 
 impl Runtime {
-    pub fn new() -> Self {
-        let (tx, rx): (Sender<InitResult>, Receiver<InitResult>) = channel();
+    pub fn new(error_sink: SharedError) -> Self {
+        let channel: (Sender<RuntimeBridgeResult>, Receiver<RuntimeBridgeResult>) = mpsc::channel();
 
         Self {
-            init_rx: rx,
-            init_tx: tx,
+            error_sink,
+            async_bridge_tx: channel.0,
+            async_bridge_rx: channel.1,
             app_state: AppState::Initializing,
         }
     }
 
+    fn capture_error(error_sink: &SharedError, e: RedixelError) {
+        *error_sink.borrow_mut() = Some(e)
+    }
+
     fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) {
+        println!("Step 1/3: Bootstrapping Window System...");
+
         let window_manager: WindowManager = match WindowManager::new(event_loop) {
             Ok(window_manager) => window_manager,
             Err(e) => {
-                eprintln!("Failed to initialize Window Manager: {e}");
-                self.app_state = AppState::Error;
+                Self::capture_error(&self.error_sink, e);
+                event_loop.exit();
                 return;
             }
         };
 
+        let sender: Sender<RuntimeBridgeResult> = self.async_bridge_tx.clone();
         let window: Arc<dyn Window> = window_manager.get_window();
         let proxy: EventLoopProxy = event_loop.create_proxy();
-        let sender: Sender<InitResult> = self.init_tx.clone();
 
         let init_future = async move {
-            let result: Result<Renderer, Box<dyn Error>> = Renderer::new(window).await;
-
-            match result {
+            match Renderer::new(window).await {
                 Ok(renderer) => {
                     let _ = sender.send(Ok((renderer, window_manager)));
                 }
                 Err(e) => {
-                    let _ = sender.send(Err(format!("Failed to initialize Renderer: {e}")));
+                    let _ = sender.send(Err(e));
                 }
             }
 
@@ -85,8 +93,8 @@ impl Runtime {
         self.app_state = AppState::Loading;
     }
 
-    fn complete_initialization(&mut self) {
-        if let Ok(result) = self.init_rx.try_recv() {
+    fn complete_initialization(&mut self, event_loop: &dyn ActiveEventLoop) {
+        if let Ok(result) = self.async_bridge_rx.try_recv() {
             match result {
                 Ok((renderer, window_manager)) => {
                     // Request first draw manually, important to force open the window.
@@ -99,11 +107,11 @@ impl Runtime {
                         input_manager: InputManager::new(),
                     };
 
-                    println!("Redixel initialized successfully!");
+                    println!("Step 3/3: RedPixel Engine is Running!");
                 }
                 Err(e) => {
-                    eprintln!("Redixel Runtime Initialization failed: {e}");
-                    self.app_state = AppState::Error;
+                    Self::capture_error(&self.error_sink, e);
+                    event_loop.exit();
                 }
             }
         }
@@ -119,19 +127,14 @@ impl ApplicationHandler for Runtime {
 
     fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
         if matches!(self.app_state, AppState::Loading) {
-            self.complete_initialization();
-
-            if let AppState::Error = self.app_state {
-                event_loop.exit();
-            }
+            self.complete_initialization(event_loop);
         }
     }
 
     fn window_event(&mut self, event_loop: &dyn ActiveEventLoop, _id: WindowId, event: WindowEvent) {
         match &mut self.app_state {
-            AppState::Loading => {}
             AppState::Initializing => {}
-            AppState::Error => event_loop.exit(),
+            AppState::Loading => println!("Step 2/3: Awaiting Graphics Context (WGPU)..."),
             AppState::Running {
                 input_manager,
                 window_manager,
@@ -139,19 +142,32 @@ impl ApplicationHandler for Runtime {
             } => match event {
                 WindowEvent::RedrawRequested => {
                     match renderer.render() {
+                        // Frame submitted successfully; no further control flow needed.
                         Ok(_) => {}
+
                         // A timeout is usually transient (e.g., frame took too long).
-                        //Just silently skip the frame and it is ok.
-                        Err(wgpu::SurfaceError::Timeout) => {}
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(window_manager.get_window().surface_size())
+                        // Just silently skip the frame and it is ok.
+                        Err(RedixelError::Surface(SurfaceError::Timeout)) => {}
+
+                        // The swap chain has been lost or is outdated; we must recreate it.
+                        Err(RedixelError::Surface(SurfaceError::Lost | SurfaceError::Outdated)) => {
+                            renderer.resize(window_manager.get_window().surface_size());
                         }
-                        Err(wgpu::SurfaceError::OutOfMemory) => event_loop.exit(),
-                        Err(e) => log::error!("Render error: {:?}", e),
+
+                        Err(e @ RedixelError::Surface(SurfaceError::OutOfMemory)) => {
+                            Self::capture_error(&self.error_sink, e);
+                            event_loop.exit();
+                        }
+
+                        Err(e) => {
+                            Self::capture_error(&self.error_sink, e);
+                            event_loop.exit();
+                        }
                     };
 
                     window_manager.request_redraw();
                 }
+
                 WindowEvent::CloseRequested | WindowEvent::Destroyed => event_loop.exit(),
                 WindowEvent::SurfaceResized(size) => renderer.resize(size),
                 event if input_manager.is_input_event(&event) => input_manager.handle_input_event(&event),

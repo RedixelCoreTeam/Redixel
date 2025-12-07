@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::sync::Arc;
 
 use wgpu::Adapter;
@@ -27,6 +26,8 @@ use wgpu::wgt::DeviceDescriptor;
 use winit::dpi::PhysicalSize;
 use winit::window::Window;
 
+use crate::engine::error::RedixelError;
+
 #[derive(Debug)]
 pub struct RendererDevice {
     pub surface: Surface<'static>,
@@ -36,7 +37,7 @@ pub struct RendererDevice {
 }
 
 impl RendererDevice {
-    pub async fn new(window: Arc<dyn Window>) -> Result<Self, Box<dyn Error>> {
+    pub async fn new(window: Arc<dyn Window>) -> Result<Self, RedixelError> {
         let instance: Instance = Self::create_instance();
 
         #[cfg(not(target_os = "windows"))]

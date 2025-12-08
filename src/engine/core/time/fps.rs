@@ -2,7 +2,7 @@
 use web_time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
@@ -82,7 +82,7 @@ impl FpsTracker {
             let elapsed: f64 = self.frame_start_time.elapsed().as_secs_f64();
             if elapsed < self.frame_target_duration {
                 let remaining: f64 = self.frame_target_duration - elapsed;
-                
+
                 if remaining > MAX_SPIN_LOOP_DURATION {
                     thread::sleep(Duration::from_secs_f64(remaining - MAX_SPIN_LOOP_DURATION));
                 }

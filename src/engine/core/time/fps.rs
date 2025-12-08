@@ -33,7 +33,7 @@ impl FpsTracker {
     // Get current FPS
     #[allow(dead_code)]
     pub fn get_fps(&self) -> f64 {
-        return self.fps;
+        self.fps
     }
 
     // Updates the target frame rate.

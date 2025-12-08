@@ -176,6 +176,7 @@ impl ApplicationHandler for Runtime {
                             event_loop.exit();
                         }
                     };
+                    window_manager.update_window_title(format!("Redixel - FPS: {:.2}", fps_tracker.get_fps()).as_str());
                     fps_tracker.end_frame();
                     window_manager.request_redraw();
                 }

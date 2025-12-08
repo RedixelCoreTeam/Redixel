@@ -124,7 +124,7 @@ impl RendererDevice {
             .present_modes
             .iter()
             .copied()
-            .find(|m: &PresentMode| *m == PresentMode::Fifo)
+            .find(|m: &PresentMode| *m == PresentMode::Immediate) // No vsync -> Tearing
             .unwrap_or(surface_caps.present_modes[0]);
 
         SurfaceConfiguration {

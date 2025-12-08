@@ -23,6 +23,7 @@ fn setup_logging() {
 // Web logging (WASM)
 #[cfg(target_arch = "wasm32")]
 fn setup_logging() -> Result<(), RedixelError> {
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook)); 
     console_log::init_with_level(log::Level::Info)?;
     Ok(())
 }

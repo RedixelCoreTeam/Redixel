@@ -1,6 +1,13 @@
-use std::thread;
-use std::time::{Duration, Instant};
+#[cfg(target_arch = "wasm32")]
+use web_time::Instant;
 
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::{Instant, Duration};
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::thread;
+
+#[cfg(not(target_arch = "wasm32"))]
 const MAX_SPIN_LOOP_DURATION: f64 = 0.002;
 
 #[derive(Debug)]
@@ -8,7 +15,7 @@ pub struct FpsTracker {
     frame_last_time: Instant,
     frame_start_time: Instant,
     frame_target_duration: f64,
-    pub fps: f64,
+    fps: f64,
 }
 
 // Do all FPS tracking for perfomance measurements and etc
@@ -21,6 +28,12 @@ impl FpsTracker {
             frame_target_duration: 0.0, // 0.0 -> unlimited
             fps: 0.0,
         }
+    }
+
+    // Get current FPS
+    #[allow(dead_code)]
+    pub fn get_fps(&self) -> f64 {
+        return self.fps;
     }
 
     // Updates the target frame rate.

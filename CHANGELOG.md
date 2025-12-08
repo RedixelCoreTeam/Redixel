@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `CONTRIBUTING.md` guide enforcing strict coding styles, environment setup, and CI workflow.
 - Initial project structure for the **Redixel Engine**.
-- Engine bootstrap (`main.rs`, `lib.rs`) with `red_pixel::init()` entry point.
+- Engine bootstrap (`main.rs`, `lib.rs`) with `redixel::init()` entry point.
 - **Runtime system** implementing `winit::ApplicationHandler`, orchestrating:
   - Event processing
   - Surface creation

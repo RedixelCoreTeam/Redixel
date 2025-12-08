@@ -17,7 +17,7 @@ use wasm_bindgen::prelude::*;
 #[allow(dead_code)]
 #[cfg(not(target_arch = "wasm32"))]
 fn setup_logging() {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("red_pixel")).init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("redixel")).init();
 }
 
 // Web logging (WASM)

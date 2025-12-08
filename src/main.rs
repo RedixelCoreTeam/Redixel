@@ -1,3 +1,3 @@
 fn main() {
-    let _ = red_pixel::init();
+    let _ = redixel::init();
 }

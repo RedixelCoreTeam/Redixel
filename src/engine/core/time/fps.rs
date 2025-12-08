@@ -1,11 +1,13 @@
 use std::thread;
 use std::time::{Duration, Instant};
 
+const MAX_SPIN_LOOP_DURATION: f64 = 0.002;
+
 #[derive(Debug)]
 pub struct FpsTracker {
     frame_last_time: Instant,
     frame_start_time: Instant,
-    frame_target_duration: u128,
+    frame_target_duration: f64,
     pub fps: f64,
 }
 
@@ -16,7 +18,7 @@ impl FpsTracker {
         Self {
             frame_last_time: now,
             frame_start_time: now,
-            frame_target_duration: 0, // 0 -> unlimited
+            frame_target_duration: 0.0, // 0.0 -> unlimited
             fps: 0.0,
         }
     }
@@ -28,17 +30,16 @@ impl FpsTracker {
     //
     // # Arguments
     //
-    // * `target_fps` - The desired frames per second (e.g., 60, 144). Pass 0 to unlock.
-    pub fn set_target_fps(&mut self, target_fps: u32) {
-        if target_fps > 0 {
-            self.frame_target_duration = 1_000_000_000 / target_fps as u128;
+    // * `target_fps` - The desired frames per second (e.g., 60.0, 144.0). Pass 0.0 to unlock.
+    pub fn set_target_fps(&mut self, target_fps: f64) {
+        if target_fps > 0.0 {
+            self.frame_target_duration = 1.0 / target_fps;
         } else {
-            self.frame_target_duration = 0;
+            self.frame_target_duration = 0.0;
         }
     }
 
     // Call at the **start of the frame**
-    //
     pub fn begin_frame(&mut self) {
         self.frame_start_time = Instant::now();
     }
@@ -50,30 +51,34 @@ impl FpsTracker {
     // - Sleeps/Waits to limit the target FPS (if set).
     pub fn end_frame(&mut self) {
         let now: Instant = Instant::now();
-        let delta_frame_time: u128 = now.duration_since(self.frame_last_time).as_nanos();
+        let delta_frame_time: f64 = now.duration_since(self.frame_last_time).as_secs_f64();
         self.frame_last_time = now;
 
-        if delta_frame_time > 0 {
-            self.fps = 1_000_000_000.0 / (delta_frame_time as f64);
+        if delta_frame_time > 0.0 {
+            self.fps = 1.0 / delta_frame_time;
         }
 
-        if self.frame_target_duration == 0 {
-            return;
-        }
-
-        // FPS limit
-        let elapsed: u128 = self.frame_start_time.elapsed().as_nanos();
-        if elapsed < self.frame_target_duration {
-            let remaining: u128 = self.frame_target_duration - elapsed;
-
-            if remaining > 2_000_000 {
-                thread::sleep(Duration::from_nanos((remaining - 1_500_000) as u64));
+        // FPS limit only Desktop
+        // Hibrid approach, with sleep followed by a spin_loop in last 2 ms
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if self.frame_target_duration == 0.0 {
+                return;
             }
 
-            // Spin wait for 1.5 ms at maximum for the final precision (burns CPU but is accurate)
-            while self.frame_start_time.elapsed().as_nanos() < self.frame_target_duration {
-                // distinct hint to the processor that we are spinning
-                std::hint::spin_loop();
+            let elapsed: f64 = self.frame_start_time.elapsed().as_secs_f64();
+            if elapsed < self.frame_target_duration {
+                let remaining: f64 = self.frame_target_duration - elapsed;
+                
+                if remaining > MAX_SPIN_LOOP_DURATION {
+                    thread::sleep(Duration::from_secs_f64(remaining - MAX_SPIN_LOOP_DURATION));
+                }
+
+                // Spin wait for 10 ms at maximum for the final precision (burns CPU but is accurate)
+                while self.frame_start_time.elapsed().as_secs_f64() < self.frame_target_duration {
+                    // distinct hint to the processor that we are spinning
+                    std::hint::spin_loop();
+                }
             }
         }
     }

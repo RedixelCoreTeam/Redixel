@@ -100,7 +100,7 @@ impl Runtime {
 
             // Initializing fps tracker
             let mut fps_tracker: FpsTracker = FpsTracker::new();
-            fps_tracker.set_target_fps(60); // TODO: fps hardcoded, create AppSettings
+            fps_tracker.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
 
             self.app_state = AppState::Running {
                 renderer: Box::new(renderer),

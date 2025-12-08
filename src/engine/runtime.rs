@@ -24,7 +24,7 @@ pub enum AppState {
     Loading,
     Initializing,
     Running {
-        renderer: Renderer,
+        renderer: Box<Renderer>,
         input_manager: InputManager,
         window_manager: WindowManager,
         fps_tracker: FpsTracker,
@@ -103,7 +103,7 @@ impl Runtime {
             fps_tracker.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
 
             self.app_state = AppState::Running {
-                renderer,
+                renderer: Box::new(renderer),
                 window_manager,
                 input_manager: InputManager::new(),
                 fps_tracker,

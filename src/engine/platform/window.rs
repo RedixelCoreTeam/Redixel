@@ -54,10 +54,6 @@ impl WindowManager {
         self.window.clone() // TODO: No need for cloning.
     }
 
-    pub fn update_window_title(&self, redixel_title: &str) {
-        self.window.set_title(redixel_title);
-    }
-
     pub fn handle_window_event(&self, event: &WindowEvent) {
         match event {
             WindowEvent::Focused(_) => {}

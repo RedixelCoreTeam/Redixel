@@ -66,9 +66,6 @@ impl RendererDevice {
         let config: SurfaceConfiguration = Self::create_surface_config(&window, &surface, &adapter);
         surface.configure(&device, &config);
 
-        let info = adapter.get_info();
-        log::info!("Backend Gráfico Selecionado: {:?}", info.backend);
-
         Ok(Self {
             surface,
             device,
@@ -104,7 +101,7 @@ impl RendererDevice {
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
                 required_limits: adapter.limits(),
-                memory_hints: MemoryHints::default(),
+                memory_hints: MemoryHints::Performance,
                 label: Some("REDIXEL_DEVICE"),
                 trace: Trace::Off,
                 experimental_features: ExperimentalFeatures::default(),

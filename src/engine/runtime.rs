@@ -103,9 +103,9 @@ impl Runtime {
             time_manager.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
 
             self.app_state = AppState::Running {
+                input_manager: InputManager::new(),
                 renderer: Box::new(renderer),
                 window_manager,
-                input_manager: InputManager::new(),
                 time_manager,
             };
 
@@ -153,6 +153,7 @@ impl ApplicationHandler for Runtime {
             } => match event {
                 WindowEvent::RedrawRequested => {
                     time_manager.begin_frame();
+
                     match renderer.render() {
                         // Frame submitted successfully; no further control flow needed.
                         Ok(_) => {}
@@ -176,7 +177,9 @@ impl ApplicationHandler for Runtime {
                             event_loop.exit();
                         }
                     };
+
                     time_manager.end_frame();
+                    time_manager.on_fps_interval(1.0, |fps: f64| window_manager.set_title_fps(fps));
                     window_manager.request_redraw();
                 }
 

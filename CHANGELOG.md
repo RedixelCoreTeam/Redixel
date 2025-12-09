@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - `CONTRIBUTING.md` guide enforcing strict coding styles, environment setup, and CI workflow.
 - Initial project structure for the **Redixel Engine**.
-- Engine bootstrap (`main.rs`, `lib.rs`) with `red_pixel::init()` entry point.
+- Engine bootstrap (`main.rs`, `lib.rs`) with `redixel::init()` entry point.
 - **Runtime system** implementing `winit::ApplicationHandler`, orchestrating:
   - Event processing
   - Surface creation
@@ -46,6 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented a centralized `RedixelError` enum using `thiserror` to capture and contextually wrap errors from `winit`, `wgpu`, and `web-sys`.
   - Added robust error propagation across the runtime, enabling graceful shutdown on failure.
   - Integrated `log` crate with `env_logger` (Desktop) and `console_log` (WASM) for structured logging and debugging.
+- **Fps Tracker and Limiting**:
+  - Implemented `FpsTracker` for precise frame timing, delta-time calculation, and performance monitoring.
+  - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
 
 ### Changed
 

@@ -17,15 +17,17 @@ use super::error::SharedError;
 use super::graphics::renderer::Renderer;
 use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
+use super::time::TimeManager;
 
 #[derive(Debug)]
 pub enum AppState {
     Loading,
     Initializing,
     Running {
-        renderer: Renderer,
+        renderer: Box<Renderer>,
         input_manager: InputManager,
         window_manager: WindowManager,
+        time_manager: TimeManager,
     },
 }
 
@@ -96,10 +98,15 @@ impl Runtime {
             // There could be a more automatic way, but, for now this is it.
             window_manager.request_redraw();
 
+            // Initializing fps tracker
+            let mut time_manager: TimeManager = TimeManager::new();
+            time_manager.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
+
             self.app_state = AppState::Running {
-                renderer,
-                window_manager,
                 input_manager: InputManager::new(),
+                renderer: Box::new(renderer),
+                window_manager,
+                time_manager,
             };
 
             log::info!("Step 3/3: Redixel Engine is Running!");
@@ -142,8 +149,11 @@ impl ApplicationHandler for Runtime {
                 input_manager,
                 window_manager,
                 renderer,
+                time_manager,
             } => match event {
                 WindowEvent::RedrawRequested => {
+                    time_manager.begin_frame();
+
                     match renderer.render() {
                         // Frame submitted successfully; no further control flow needed.
                         Ok(_) => {}
@@ -168,6 +178,8 @@ impl ApplicationHandler for Runtime {
                         }
                     };
 
+                    time_manager.end_frame();
+                    time_manager.on_fps_interval(1.0, |fps: f64| window_manager.set_title_fps(fps));
                     window_manager.request_redraw();
                 }
 

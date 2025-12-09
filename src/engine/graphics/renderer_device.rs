@@ -89,7 +89,7 @@ impl RendererDevice {
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {
         instance
             .request_adapter(&RequestAdapterOptions {
-                power_preference: PowerPreference::default(),
+                power_preference: PowerPreference::HighPerformance,
                 compatible_surface: Some(surface),
                 force_fallback_adapter: false,
             })
@@ -101,7 +101,7 @@ impl RendererDevice {
             .request_device(&DeviceDescriptor {
                 required_features: Features::empty(),
                 required_limits: adapter.limits(),
-                memory_hints: MemoryHints::default(),
+                memory_hints: MemoryHints::Performance,
                 label: Some("REDIXEL_DEVICE"),
                 trace: Trace::Off,
                 experimental_features: ExperimentalFeatures::default(),
@@ -124,7 +124,7 @@ impl RendererDevice {
             .present_modes
             .iter()
             .copied()
-            .find(|m: &PresentMode| *m == PresentMode::Fifo)
+            .find(|m: &PresentMode| *m == PresentMode::Immediate) // No vsync -> Tearing
             .unwrap_or(surface_caps.present_modes[0]);
 
         SurfaceConfiguration {

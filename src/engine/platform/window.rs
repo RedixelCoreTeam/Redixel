@@ -54,16 +54,21 @@ impl WindowManager {
         self.window.clone() // TODO: No need for cloning.
     }
 
+    pub fn request_redraw(&self) {
+        self.window.request_redraw();
+    }
+
+    pub fn set_title_fps(&self, fps: f64) {
+        #[cfg(not(target_arch = "wasm32"))]
+        self.window.set_title(&format!("Redixel - FPS: {fps:.0}"));
+    }
+
     pub fn handle_window_event(&self, event: &WindowEvent) {
         match event {
             WindowEvent::Focused(_) => {}
             WindowEvent::ScaleFactorChanged { .. } => {}
             _ => {}
         }
-    }
-
-    pub fn request_redraw(&self) {
-        self.window.request_redraw();
     }
 
     pub fn is_window_event(&self, event: &WindowEvent) -> bool {

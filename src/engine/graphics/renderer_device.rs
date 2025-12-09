@@ -66,6 +66,9 @@ impl RendererDevice {
         let config: SurfaceConfiguration = Self::create_surface_config(&window, &surface, &adapter);
         surface.configure(&device, &config);
 
+        let info = adapter.get_info();
+        log::info!("Backend Gráfico Selecionado: {:?}", info.backend);
+
         Ok(Self {
             surface,
             device,
@@ -89,7 +92,7 @@ impl RendererDevice {
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {
         instance
             .request_adapter(&RequestAdapterOptions {
-                power_preference: PowerPreference::default(),
+                power_preference: PowerPreference::HighPerformance,
                 compatible_surface: Some(surface),
                 force_fallback_adapter: false,
             })

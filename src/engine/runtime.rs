@@ -12,12 +12,12 @@ use winit::window::WindowId;
 
 use wgpu::SurfaceError;
 
-use super::core::time::fps::FpsTracker;
 use super::error::RedixelError;
 use super::error::SharedError;
 use super::graphics::renderer::Renderer;
 use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
+use super::time::TimeManager;
 
 #[derive(Debug)]
 pub enum AppState {
@@ -27,7 +27,7 @@ pub enum AppState {
         renderer: Box<Renderer>,
         input_manager: InputManager,
         window_manager: WindowManager,
-        fps_tracker: FpsTracker,
+        time_manager: TimeManager,
     },
 }
 
@@ -99,14 +99,14 @@ impl Runtime {
             window_manager.request_redraw();
 
             // Initializing fps tracker
-            let mut fps_tracker: FpsTracker = FpsTracker::new();
-            fps_tracker.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
+            let mut time_manager: TimeManager = TimeManager::new();
+            time_manager.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
 
             self.app_state = AppState::Running {
                 renderer: Box::new(renderer),
                 window_manager,
                 input_manager: InputManager::new(),
-                fps_tracker,
+                time_manager,
             };
 
             log::info!("Step 3/3: Redixel Engine is Running!");
@@ -149,10 +149,10 @@ impl ApplicationHandler for Runtime {
                 input_manager,
                 window_manager,
                 renderer,
-                fps_tracker,
+                time_manager,
             } => match event {
                 WindowEvent::RedrawRequested => {
-                    fps_tracker.begin_frame();
+                    time_manager.begin_frame();
                     match renderer.render() {
                         // Frame submitted successfully; no further control flow needed.
                         Ok(_) => {}
@@ -176,7 +176,7 @@ impl ApplicationHandler for Runtime {
                             event_loop.exit();
                         }
                     };
-                    fps_tracker.end_frame();
+                    time_manager.end_frame();
                     window_manager.request_redraw();
                 }
 

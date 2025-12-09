@@ -2,7 +2,10 @@
 use web_time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
@@ -11,7 +14,7 @@ use std::thread;
 const MAX_SPIN_LOOP_DURATION: f64 = 0.002;
 
 #[derive(Debug)]
-pub struct FpsTracker {
+pub struct TimeManager {
     frame_last_time: Instant,
     frame_start_time: Instant,
     frame_target_duration: f64,
@@ -19,7 +22,7 @@ pub struct FpsTracker {
 }
 
 // Do all FPS tracking for perfomance measurements and etc
-impl FpsTracker {
+impl TimeManager {
     pub fn new() -> Self {
         let now: Instant = Instant::now();
         Self {

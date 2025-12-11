@@ -9,6 +9,7 @@ use winit::event_loop::EventLoop;
 use engine::error::RedixelError;
 use engine::error::SharedError;
 use engine::runtime::Runtime;
+use engine::settings::EngineSettings;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -36,6 +37,7 @@ pub fn init() -> Result<(), RedixelError> {
     #[cfg(target_arch = "wasm32")]
     setup_logging()?;
 
+    let _ = EngineSettings::load("config.json");
     let error_sink: SharedError = Rc::new(RefCell::new(None));
     let event_loop: EventLoop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

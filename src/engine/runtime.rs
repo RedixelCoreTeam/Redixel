@@ -31,19 +31,19 @@ pub enum AppState {
     },
 }
 
-type RuntimeBridgeResult = Result<(Renderer, WindowManager), RedixelError>;
+type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
 
 #[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
     error_sink: SharedError,
-    async_bridge_tx: Sender<RuntimeBridgeResult>,
-    async_bridge_rx: Receiver<RuntimeBridgeResult>,
+    async_bridge_tx: Sender<BridgePayload>,
+    async_bridge_rx: Receiver<BridgePayload>,
 }
 
 impl Runtime {
     pub fn new(error_sink: SharedError) -> Self {
-        let channel: (Sender<RuntimeBridgeResult>, Receiver<RuntimeBridgeResult>) = mpsc::channel();
+        let channel: (Sender<BridgePayload>, Receiver<BridgePayload>) = mpsc::channel();
 
         Self {
             error_sink,
@@ -58,36 +58,12 @@ impl Runtime {
         *error_sink.borrow_mut() = Some(error);
     }
 
-    fn init_future_bridge(self, event_loop: &dyn ActiveEventLoop, window_manager:WindowManager)-> Pin<Box<dyn Future<Output = ()> + Send>> {
-        let sender: Sender<RuntimeBridgeResult> = self.async_bridge_tx.clone();
+    fn spawn_renderer_task(&self, event_loop: &dyn ActiveEventLoop, window_manager: WindowManager) {
+        let sender: Sender<BridgePayload> = self.async_bridge_tx.clone();
         let window: Arc<dyn Window> = window_manager.get_window();
         let proxy: EventLoopProxy = event_loop.create_proxy();
 
-        let init_future = async move {
-            match Renderer::new(window).await {
-                Ok(renderer) => {
-                    let _ = sender.send(Ok((renderer, window_manager)));
-                }
-                Err(e) => {
-                    let _ = sender.send(Err(e));
-                }
-            }
-
-            proxy.wake_up();
-        };
-
-        Box::pin(init_future)
-    }
-
-    fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), RedixelError> {
-        log::info!("Step 1/3: Bootstrapping Window System...");
-
-        let window_manager: WindowManager = WindowManager::new(event_loop)?;
-        let sender: Sender<RuntimeBridgeResult> = self.async_bridge_tx.clone();
-        let window: Arc<dyn Window> = window_manager.get_window();
-        let proxy: EventLoopProxy = event_loop.create_proxy();
-
-        let init_future = async move {
+        let init_task = async move {
             match Renderer::new(window).await {
                 Ok(renderer) => {
                     let _ = sender.send(Ok((renderer, window_manager)));
@@ -101,13 +77,17 @@ impl Runtime {
         };
 
         #[cfg(target_arch = "wasm32")]
-        wasm_bindgen_futures::spawn_local(init_future);
+        wasm_bindgen_futures::spawn_local(init_task);
 
         #[cfg(not(target_arch = "wasm32"))]
-        std::thread::spawn(move || pollster::block_on(init_future));
+        std::thread::spawn(move || pollster::block_on(init_task));
+    }
 
+    fn start_initialization(&mut self, event_loop: &dyn ActiveEventLoop) -> Result<(), RedixelError> {
+        log::info!("Step 1/3: Bootstrapping Window System...");
+        let window_manager: WindowManager = WindowManager::new(event_loop)?;
+        self.spawn_renderer_task(event_loop, window_manager);
         self.app_state = AppState::Loading;
-
         Ok(())
     }
 
@@ -139,11 +119,11 @@ impl Runtime {
 
 impl ApplicationHandler for Runtime {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
-        log::info!("Initializing Redixel Engine.");
-
         if !matches!(self.app_state, AppState::Initializing) {
             return;
         }
+
+        log::info!("Initializing Redixel Engine.");
 
         if let Err(e) = self.start_initialization(event_loop) {
             Self::capture_fatal_error(&self.error_sink, e);

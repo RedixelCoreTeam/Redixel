@@ -193,3 +193,31 @@ impl ApplicationHandler for Runtime {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    #[test]
+    fn test_initial_state_is_initializing() {
+        let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
+        let runtime: Runtime = Runtime::new(error_sink.clone());
+
+        assert!(matches!(runtime.app_state, AppState::Initializing));
+        assert!(error_sink.borrow().is_none());
+    }
+
+    #[test]
+    fn test_fatal_error_capture() {
+        let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
+        let dummy_error: RedixelError = RedixelError::Surface(SurfaceError::Lost);
+
+        Runtime::capture_fatal_error(&error_sink, dummy_error);
+        let captured: std::cell::Ref<'_, Option<RedixelError>> = error_sink.borrow();
+
+        assert!(captured.is_some());
+        assert!(matches!(captured.as_ref().unwrap(), RedixelError::Surface(SurfaceError::Lost)));
+    }
+}

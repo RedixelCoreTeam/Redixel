@@ -23,7 +23,7 @@ impl WindowManager {
         let width: u32 = settings.get_path("window.width", 600);
         let height: u32 = settings.get_path("window.height", 500);
         // TODO implementar fullscreen de acordo com winit::monitor::Fullscreen;
-        // let fullscreen: bool = settings.get_path("window.fullscreen", false); 
+        // let fullscreen: bool = settings.get_path("window.fullscreen", false);
 
         #[allow(unused_mut)]
         let mut attributes: WindowAttributes = WindowAttributes::default()

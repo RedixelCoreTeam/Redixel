@@ -37,7 +37,8 @@ pub fn init() -> Result<(), RedixelError> {
     #[cfg(target_arch = "wasm32")]
     setup_logging()?;
 
-    let _ = EngineSettings::load("config.json");
+    // Load App settings
+    EngineSettings::global_write().load("config/config.json");
     let error_sink: SharedError = Rc::new(RefCell::new(None));
     let event_loop: EventLoop = EventLoop::new()?;
     event_loop.set_control_flow(ControlFlow::Poll);

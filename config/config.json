@@ -1,0 +1,15 @@
+{
+    "app": {
+        "name": "Redixel"
+    },
+    "window": {
+        "width": 1280,
+        "height": 720,
+        "fullscreen": false,
+        "target_fps": 60.0
+    },
+    "renderer": {
+        "present_mode": 0,
+        "backend": 0
+    }
+}

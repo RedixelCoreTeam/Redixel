@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Fps Tracker and Limiting**:
   - Implemented `FpsTracker` for precise frame timing, delta-time calculation, and performance monitoring.
   - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
+- **Configuration System**:
+  - Implemented **`EngineSettings`** as a thread-safe global singleton (`OnceLock`, `RwLock`) enabling concurrent access from any thread.
+  - Integrated `serde` and `serde_json` for robust parsing of external `config.json` files with automatic error recovery and logging.
+  - Added a generic `get_path<T>` utility for querying nested settings using dot-notation strings (e.g., `"renderer.present_mode"`).
+  - Implemented logic to map integer configuration values directly to `wgpu` enums (Backend, PresentMode).
+  - Added `CONFIG.md` documentation comprehensively detailing the `app`, `window`, and `renderer` schemas and their default behaviors.
 
 ### Changed
 

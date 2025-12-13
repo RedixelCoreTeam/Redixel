@@ -58,7 +58,7 @@ impl WindowManager {
         self.window.request_redraw();
     }
 
-    pub fn set_title_fps(&self, fps: f64) {
+    pub fn set_title_fps(&self, #[allow(unused_variables)] fps: f64) {
         #[cfg(not(target_arch = "wasm32"))]
         self.window.set_title(&format!("Redixel - FPS: {fps:.0}"));
     }

@@ -27,3 +27,18 @@ jobs:
 
       - name: Test
         run: cargo test --verbose
+
+  check-wasm:
+    name: Check WASM Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Bootstrap Toolchain
+        run: rustup show
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Verify WASM Compilation
+        run: cargo check --target wasm32-unknown-unknown --verbose

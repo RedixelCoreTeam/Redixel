@@ -14,43 +14,49 @@ pub struct WindowManager {
 
 impl WindowManager {
     pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RedixelError> {
-        let attributes: WindowAttributes = Self::create_window_attributes();
+        let attributes: WindowAttributes = Self::create_window_attributes()?;
 
         Ok(Self {
             window: Arc::from(event_loop.create_window(attributes)?),
         })
     }
 
-    fn create_window_attributes() -> WindowAttributes {
-        #[cfg(target_arch = "wasm32")]
-        {
-            use web_sys::Document;
-            use web_sys::Element;
-            use web_sys::HtmlCanvasElement;
-            use web_sys::Window;
-            use web_sys::wasm_bindgen::JsCast;
-            use winit::platform::web::WindowAttributesWeb;
+    fn create_window_attributes() -> Result<WindowAttributes, RedixelError> {
+        let attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel");
+        Self::apply_platform_attributes(attributes)
+    }
 
-            let window: Window =
-                web_sys::window().ok_or_else(|| RedixelError::JsException("Global 'window' object not found."))?;
+    #[cfg(not(target_arch = "wasm32"))]
+    fn apply_platform_attributes(attributes: WindowAttributes) -> Result<WindowAttributes, RedixelError> {
+        Ok(attributes)
+    }
 
-            let document: Document = window
-                .document()
-                .ok_or_else(|| RedixelError::JsException("Global 'document' object not found."))?;
+    #[cfg(target_arch = "wasm32")]
+    fn apply_platform_attributes(attributes: WindowAttributes) -> Result<WindowAttributes, RedixelError> {
+        use web_sys::Document;
+        use web_sys::Element;
+        use web_sys::HtmlCanvasElement;
+        use web_sys::Window;
+        use web_sys::wasm_bindgen::JsCast;
+        use winit::platform::web::WindowAttributesWeb;
 
-            let html_element: Element = document
-                .get_element_by_id("redixel-canvas")
-                .ok_or_else(|| RedixelError::JsException("Could not find element '#redixel-canvas' in the DOM."))?;
+        let window: Window =
+            web_sys::window().ok_or_else(|| RedixelError::JsException("Global 'window' object not found."))?;
 
-            let canvas_element: HtmlCanvasElement = html_element.dyn_into::<HtmlCanvasElement>().map_err(|_| {
-                RedixelError::JsException("The element '#redixel-canvas' exists but is NOT a <canvas>.")
-            })?;
+        let document: Document = window
+            .document()
+            .ok_or_else(|| RedixelError::JsException("Global 'document' object not found."))?;
 
-            let web_attributes: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
-            attributes.with_platform_attributes(Box::new(web_attributes))
-        }
+        let html_element: Element = document
+            .get_element_by_id("redixel-canvas")
+            .ok_or_else(|| RedixelError::JsException("Could not find element '#redixel-canvas' in the DOM."))?;
 
-        WindowAttributes::default().with_title("Redixel")
+        let canvas_element: HtmlCanvasElement = html_element
+            .dyn_into::<HtmlCanvasElement>()
+            .map_err(|_| RedixelError::JsException("The element '#redixel-canvas' exists but is NOT a <canvas>."))?;
+
+        let web_attributes: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
+        attributes.with_platform_attributes(Box::new(web_attributes))
     }
 
     pub fn get_window(&self) -> Arc<dyn Window> {

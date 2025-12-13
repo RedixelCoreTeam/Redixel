@@ -56,7 +56,7 @@ impl WindowManager {
             .map_err(|_| RedixelError::JsException("The element '#redixel-canvas' exists but is NOT a <canvas>."))?;
 
         let web_attributes: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
-        attributes.with_platform_attributes(Box::new(web_attributes))
+        Ok(attributes.with_platform_attributes(Box::new(web_attributes)))
     }
 
     pub fn get_window(&self) -> Arc<dyn Window> {

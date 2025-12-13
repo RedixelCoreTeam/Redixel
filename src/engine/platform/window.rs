@@ -14,9 +14,14 @@ pub struct WindowManager {
 
 impl WindowManager {
     pub fn new(event_loop: &dyn ActiveEventLoop) -> Result<Self, RedixelError> {
-        #[allow(unused_mut)]
-        let mut attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel");
+        let attributes: WindowAttributes = Self::create_window_attributes();
 
+        Ok(Self {
+            window: Arc::from(event_loop.create_window(attributes)?),
+        })
+    }
+
+    fn create_window_attributes() -> WindowAttributes {
         #[cfg(target_arch = "wasm32")]
         {
             use web_sys::Document;
@@ -42,16 +47,14 @@ impl WindowManager {
             })?;
 
             let web_attributes: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas_element));
-            attributes = attributes.with_platform_attributes(Box::new(web_attributes));
+            attributes.with_platform_attributes(Box::new(web_attributes))
         }
 
-        Ok(Self {
-            window: Arc::from(event_loop.create_window(attributes)?),
-        })
+        WindowAttributes::default().with_title("Redixel")
     }
 
     pub fn get_window(&self) -> Arc<dyn Window> {
-        self.window.clone() // TODO: No need for cloning.
+        self.window.clone()
     }
 
     pub fn request_redraw(&self) {

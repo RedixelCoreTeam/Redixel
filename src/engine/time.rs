@@ -2,11 +2,7 @@
 use web_time::Instant;
 
 #[cfg(not(target_arch = "wasm32"))]
-use std::thread;
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Duration;
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Instant;
+use std::{thread, time::Duration, time::Instant};
 
 #[cfg(not(target_arch = "wasm32"))]
 const MAX_SPIN_LOOP_DURATION: f64 = 0.002;
@@ -92,12 +88,6 @@ impl TimeManager {
                 }
             }
         }
-    }
-
-    // Get current FPS
-    #[allow(dead_code)]
-    pub fn instant_fps(&self) -> f64 {
-        self.fps
     }
 
     pub fn on_fps_interval<F>(&mut self, seconds: f64, callback: F)

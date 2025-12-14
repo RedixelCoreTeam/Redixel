@@ -102,3 +102,89 @@ impl TimeManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EPSILON: f64 = 0.0001;
+
+    #[test]
+    fn test_initialization_defaults() {
+        let tm: TimeManager = TimeManager::new();
+
+        assert_eq!(tm.fps, 0.0);
+        assert_eq!(tm.frame_target_duration, 0.0);
+    }
+
+    #[test]
+    fn test_set_target_fps_logic() {
+        let mut tm: TimeManager = TimeManager::new();
+
+        tm.set_target_fps(60.0);
+        let expected_duration: f64 = 1.0 / 60.0;
+        assert!((tm.frame_target_duration - expected_duration).abs() < EPSILON);
+
+        tm.set_target_fps(144.0);
+        let expected_duration: f64 = 1.0 / 144.0;
+        assert!((tm.frame_target_duration - expected_duration).abs() < EPSILON);
+
+        tm.set_target_fps(0.0);
+        assert_eq!(tm.frame_target_duration, 0.0);
+
+        tm.set_target_fps(-10.0);
+        assert_eq!(tm.frame_target_duration, 0.0);
+    }
+
+    #[test]
+    fn test_fps_calculation() {
+        let mut tm: TimeManager = TimeManager::new();
+
+        tm.end_frame();
+        thread::sleep(Duration::from_millis(16));
+        tm.end_frame();
+
+        assert!(tm.fps > 50.0 && tm.fps < 70.0, "Calculated FPS: {}", tm.fps);
+    }
+
+    #[test]
+    fn test_interval_callback_triggers_correctly() {
+        let mut tm: TimeManager = TimeManager::new();
+        let mut triggered: bool = false;
+
+        tm.on_fps_interval(0.1, |_| triggered = true);
+        assert!(!triggered, "Callback should not trigger immediately");
+
+        thread::sleep(Duration::from_millis(110));
+
+        tm.on_fps_interval(0.1, |_| triggered = true);
+        assert!(triggered, "Callback should trigger after time has passed");
+    }
+
+    #[test]
+    fn test_frame_limiter_accuracy() {
+        let mut tm: TimeManager = TimeManager::new();
+
+        let target_fps: f64 = 100.0;
+        let target_duration_secs: f64 = 0.010;
+
+        tm.set_target_fps(target_fps);
+
+        let start: Instant = Instant::now();
+
+        tm.begin_frame();
+        tm.end_frame();
+
+        let elapsed: f64 = start.elapsed().as_secs_f64();
+
+        assert!(
+            elapsed >= target_duration_secs,
+            "Frame finished too fast! Limiter failed. Elapsed: {elapsed:.4}s",
+        );
+
+        assert!(
+            elapsed < target_duration_secs + 0.005,
+            "Frame took too long. Excessive overhead. Elapsed: {elapsed:.4}s",
+        );
+    }
+}

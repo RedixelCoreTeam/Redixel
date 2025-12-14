@@ -46,7 +46,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented a centralized `RedixelError` enum using `thiserror` to capture and contextually wrap errors from `winit`, `wgpu`, and `web-sys`.
   - Added robust error propagation across the runtime, enabling graceful shutdown on failure.
   - Integrated `log` crate with `env_logger` (Desktop) and `console_log` (WASM) for structured logging and debugging.
-- **Fps Tracker and Limiting**:
+- **TimeManager and Limiting**:
+  - Implemented `TimeManager` for precise frame timing, delta-time calculation, and performance monitoring.
+  - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
 - **Unit Tests for Core Logic:** Implemented comprehensive unit tests across key engine components:
   - **`Runtime`**: Verifies core state management, fatal error capture, and reliable asynchronous communication channel (MPSC bridge) operation.
   - **`TimeManager`**: Validates FPS calculation accuracy, frame limiting precision, correct target duration conversion, and reliable interval callback triggering.

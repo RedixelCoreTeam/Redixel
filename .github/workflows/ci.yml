@@ -8,81 +8,23 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # check-format:
-  #   name: Format
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
+  check-format:
+    name: Format
+    runs-on: ubuntu-latest
 
-  #     - name: Setup Rust
-  #       run: rustup show
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  #     - name: Run rustfmt
-  #       run: cargo fmt -- --check
+      - name: Setup Rust
+        run: rustup show
 
-  # check-linux:
-  #   name: Linux
-  #   needs: check-format
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
+      - name: Run rustfmt
+        run: cargo fmt -- --check
 
-  #     - name: Setup Rust
-  #       run: rustup show
-
-  #     - name: Rust Cache
-  #       uses: Swatinem/rust-cache@v2
-
-  #     - name: Run Clippy
-  #       run: cargo clippy -- -D warnings
-
-  #     - name: Run Tests
-  #       run: cargo test --verbose
-
-  # check-windows:
-  #   name: Windows
-  #   needs: check-format
-  #   runs-on: windows-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Rust
-  #       run: rustup show
-
-  #     - name: Rust Cache
-  #       uses: Swatinem/rust-cache@v2
-
-  #     - name: Run Clippy
-  #       run: cargo clippy -- -D warnings
-
-  #     - name: Run Tests
-  #       run: cargo test --verbose
-
-  # check-wasm:
-  #   name: WASM
-  #   needs: check-format
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Rust
-  #       run: rustup show
-
-  #     - name: Rust Cache
-  #       uses: Swatinem/rust-cache@v2
-
-  #     - name: Run Clippy
-  #       run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
-
-  #     - name: Verify WASM Compilation
-  #       run: cargo check --target wasm32-unknown-unknown --verbose
-
-  gpu-smoke-tests:
-    name: GPU Test (${{ matrix.os }})
+  test-suite:
+    name: Test Suite (${{ matrix.os }})
+    needs: check-format
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -93,7 +35,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Linux Deps
+      - name: Install Linux Graphics Deps
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
@@ -105,12 +47,36 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run GPU Test (Linux)
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Run Tests (Linux)
         if: runner.os == 'Linux'
         run: |
           export WGPU_BACKEND=vulkan
-          xvfb-run --auto-servernum cargo test gpu_smoke_test -- --nocapture
+          xvfb-run --auto-servernum cargo test --verbose
 
-      - name: Run GPU Test (Windows)
+      - name: Run Tests (Windows)
         if: runner.os == 'Windows'
-        run: cargo test gpu_smoke_test -- --nocapture
+        run: cargo test --verbose
+
+  check-wasm:
+    name: WASM Check
+    needs: check-format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
+      - name: Verify WASM Compilation
+        run: cargo check --target wasm32-unknown-unknown --verbose

@@ -109,8 +109,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           export WGPU_BACKEND=vulkan
-          xvfb-run --auto-servernum cargo test --test gpu_smoke_test -- --nocapture
+          xvfb-run --auto-servernum cargo test gpu_smoke_test -- --nocapture
 
       - name: Run GPU Test (Windows)
         if: runner.os == 'Windows'
-        run: cargo test --test gpu_smoke_test -- --nocapture
+        run: cargo test gpu_smoke_test -- --nocapture

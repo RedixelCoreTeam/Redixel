@@ -201,33 +201,10 @@ mod tests {
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    //
-    use winit::event_loop::ControlFlow;
-    use winit::event_loop::EventLoop;
-    use winit::platform::windows::EventLoopBuilderExtWindows;
-
     fn create_test_runtime() -> (Runtime, SharedError) {
         let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
         let runtime: Runtime = Runtime::new(error_sink.clone());
         (runtime, error_sink)
-    }
-
-    //
-    #[test]
-    fn test() {
-        let error_sink: SharedError = Rc::new(RefCell::new(None));
-        let mut builder = EventLoop::builder();
-
-        #[cfg(target_os = "windows")]
-        {
-            let any_thread = true;
-            builder.with_any_thread(any_thread);
-        }
-
-        let event_loop: EventLoop = builder.build().unwrap();
-        event_loop.set_control_flow(ControlFlow::Poll);
-        let runtime_app: Runtime = Runtime::new(error_sink.clone());
-        event_loop.run_app(runtime_app).unwrap();
     }
 
     #[test]

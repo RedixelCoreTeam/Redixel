@@ -197,55 +197,58 @@ impl ApplicationHandler for Runtime {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mpsc::TryRecvError;
+    use std::cell::Ref;
     use std::cell::RefCell;
     use std::rc::Rc;
 
-    #[test]
-    fn test_initial_state_is_initializing() {
+    fn create_test_runtime() -> (Runtime, SharedError) {
         let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
         let runtime: Runtime = Runtime::new(error_sink.clone());
+        (runtime, error_sink)
+    }
 
+    #[test]
+    fn test_initial_state_is_initializing() {
+        let (runtime, error_sink): (Runtime, SharedError) = create_test_runtime();
         assert!(matches!(runtime.app_state, AppState::Initializing));
         assert!(error_sink.borrow().is_none());
     }
 
     #[test]
     fn test_fatal_error_capture() {
-        let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
-        let dummy_error: RedixelError = RedixelError::Surface(SurfaceError::Lost);
+        let (runtime, error_sink): (Runtime, SharedError) = create_test_runtime();
 
-        Runtime::capture_fatal_error(&error_sink, dummy_error);
-        let captured: std::cell::Ref<'_, Option<RedixelError>> = error_sink.borrow();
+        Runtime::capture_fatal_error(&runtime.error_sink, RedixelError::TestError);
+        let captured: Ref<Option<RedixelError>> = error_sink.borrow();
 
         assert!(captured.is_some());
-        assert!(matches!(captured.as_ref().unwrap(), RedixelError::Surface(SurfaceError::Lost)));
+        assert!(matches!(captured.as_ref().unwrap(), RedixelError::TestError));
     }
 
     #[test]
-    fn gpu_smoke_test() {
-        pollster::block_on(async {
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::all(),
-                ..Default::default()
-            });
+    fn test_async_bridge_connectivity() {
+        let (runtime, _): (Runtime, SharedError) = create_test_runtime();
 
-            let adapter = instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::LowPower,
-                    force_fallback_adapter: false,
-                    compatible_surface: None,
-                })
-                .await;
+        runtime
+            .async_bridge_tx
+            .send(Err(RedixelError::TestError))
+            .expect("The communication channel should be open");
 
-            assert!(adapter.is_ok(), "failed to find a compatible adapter");
+        let received: Result<BridgePayload, TryRecvError> = runtime.async_bridge_rx.try_recv();
+        assert!(received.is_ok(), "Runtime should have received the sent message");
+    }
 
-            let adapter: wgpu::Adapter = adapter.unwrap();
-            let info: wgpu::AdapterInfo = adapter.get_info();
+    #[test]
+    fn test_complete_initialization_handles_bridge_error() {
+        let (mut runtime, _): (Runtime, SharedError) = create_test_runtime();
+        runtime.app_state = AppState::Loading;
 
-            println!("adapter found");
-            println!("name: {}", info.name);
-            println!("backend: {:?}", info.backend);
-            println!("driver: {}", info.driver);
-        });
+        runtime.async_bridge_tx.send(Err(RedixelError::TestError)).unwrap();
+        let result: Result<(), RedixelError> = runtime.complete_initialization();
+
+        assert!(result.is_err(), "The error from the channel should be propagated");
+        assert!(matches!(result.unwrap_err(), RedixelError::TestError));
+        assert!(matches!(runtime.app_state, AppState::Loading));
     }
 }

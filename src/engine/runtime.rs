@@ -220,4 +220,32 @@ mod tests {
         assert!(captured.is_some());
         assert!(matches!(captured.as_ref().unwrap(), RedixelError::Surface(SurfaceError::Lost)));
     }
+
+    #[test]
+    fn gpu_smoke_test() {
+        pollster::block_on(async {
+            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+                backends: wgpu::Backends::all(),
+                ..Default::default()
+            });
+
+            let adapter = instance
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::LowPower,
+                    force_fallback_adapter: false,
+                    compatible_surface: None,
+                })
+                .await;
+
+            assert!(adapter.is_ok(), "failed to find a compatible adapter");
+
+            let adapter: wgpu::Adapter = adapter.unwrap();
+            let info: wgpu::AdapterInfo = adapter.get_info();
+
+            println!("adapter found");
+            println!("name: {}", info.name);
+            println!("backend: {:?}", info.backend);
+            println!("driver: {}", info.driver);
+        });
+    }
 }

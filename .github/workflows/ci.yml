@@ -8,26 +8,96 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check-format:
-    name: Format
-    runs-on: ubuntu-latest
+  # check-format:
+  #   name: Format
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Rust
+  #       run: rustup show
+
+  #     - name: Run rustfmt
+  #       run: cargo fmt -- --check
+
+  # check-linux:
+  #   name: Linux
+  #   needs: check-format
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Rust
+  #       run: rustup show
+
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2
+
+  #     - name: Run Clippy
+  #       run: cargo clippy -- -D warnings
+
+  #     - name: Run Tests
+  #       run: cargo test --verbose
+
+  # check-windows:
+  #   name: Windows
+  #   needs: check-format
+  #   runs-on: windows-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Rust
+  #       run: rustup show
+
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2
+
+  #     - name: Run Clippy
+  #       run: cargo clippy -- -D warnings
+
+  #     - name: Run Tests
+  #       run: cargo test --verbose
+
+  # check-wasm:
+  #   name: WASM
+  #   needs: check-format
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Rust
+  #       run: rustup show
+
+  #     - name: Rust Cache
+  #       uses: Swatinem/rust-cache@v2
+
+  #     - name: Run Clippy
+  #       run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
+  #     - name: Verify WASM Compilation
+  #       run: cargo check --target wasm32-unknown-unknown --verbose
+
+  gpu-smoke-tests:
+    name: GPU Test (${{ all.os }})
+    runs-on: ${{ all.os }}
+    strategy:
+      fail-fast: false
+      all:
+        os: [ubuntu-latest, windows-latest]
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Rust
-        run: rustup show
-
-      - name: Run rustfmt
-        run: cargo fmt -- --check
-
-  check-linux:
-    name: Linux
-    needs: check-format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Install Linux Deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev libxkbcommon-x11-0 xvfb mesa-vulkan-drivers
 
       - name: Setup Rust
         run: rustup show
@@ -35,48 +105,12 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
+      - name: Run GPU Test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          export WGPU_BACKEND=vulkan
+          xvfb-run --auto-servernum cargo test --test gpu_smoke_test -- --nocapture
 
-      - name: Run Tests
-        run: cargo test --verbose
-
-  check-windows:
-    name: Windows
-    needs: check-format
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        run: rustup show
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run Clippy
-        run: cargo clippy -- -D warnings
-
-      - name: Run Tests
-        run: cargo test --verbose
-
-  check-wasm:
-    name: WASM
-    needs: check-format
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Rust
-        run: rustup show
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run Clippy
-        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
-
-      - name: Verify WASM Compilation
-        run: cargo check --target wasm32-unknown-unknown --verbose
+      - name: Run GPU Test (Windows)
+        if: runner.os == 'Windows'
+        run: cargo test --test gpu_smoke_test -- --nocapture

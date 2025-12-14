@@ -219,11 +219,11 @@ mod tests {
     fn test_fatal_error_capture() {
         let (runtime, error_sink): (Runtime, SharedError) = create_test_runtime();
 
-        Runtime::capture_fatal_error(&runtime.error_sink, RedixelError::TestError);
+        Runtime::capture_fatal_error(&runtime.error_sink, RedixelError::Dummy);
         let captured: Ref<Option<RedixelError>> = error_sink.borrow();
 
         assert!(captured.is_some());
-        assert!(matches!(captured.as_ref().unwrap(), RedixelError::TestError));
+        assert!(matches!(captured.as_ref().unwrap(), RedixelError::Dummy));
     }
 
     #[test]
@@ -232,7 +232,7 @@ mod tests {
 
         runtime
             .async_bridge_tx
-            .send(Err(RedixelError::TestError))
+            .send(Err(RedixelError::Dummy))
             .expect("The communication channel should be open");
 
         let received: Result<BridgePayload, TryRecvError> = runtime.async_bridge_rx.try_recv();
@@ -244,11 +244,11 @@ mod tests {
         let (mut runtime, _): (Runtime, SharedError) = create_test_runtime();
         runtime.app_state = AppState::Loading;
 
-        runtime.async_bridge_tx.send(Err(RedixelError::TestError)).unwrap();
+        runtime.async_bridge_tx.send(Err(RedixelError::Dummy)).unwrap();
         let result: Result<(), RedixelError> = runtime.complete_initialization();
 
         assert!(result.is_err(), "The error from the channel should be propagated");
-        assert!(matches!(result.unwrap_err(), RedixelError::TestError));
+        assert!(matches!(result.unwrap_err(), RedixelError::Dummy));
         assert!(matches!(runtime.app_state, AppState::Loading));
     }
 }

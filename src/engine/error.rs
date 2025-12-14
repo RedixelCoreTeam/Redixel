@@ -54,8 +54,8 @@ pub enum RedixelError {
     JsException(&'static str),
 
     #[cfg(test)]
-    #[error("Intentional error triggered for testing purposes")]
-    TestError,
+    #[error("Dummy error for testing purposes")]
+    Dummy,
 }
 
 #[cfg(target_arch = "wasm32")]

@@ -83,10 +83,10 @@ jobs:
 
   gpu-smoke-tests:
     name: GPU Test (${{ all.os }})
-    runs-on: ${{ all.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      all:
+      matrix:
         os: [ubuntu-latest, windows-latest]
 
     steps:

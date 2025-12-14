@@ -67,9 +67,21 @@ impl WindowManager {
         self.window.request_redraw();
     }
 
+    fn format_title(fps: f64) -> String {
+        format!("Redixel - FPS: {fps:.0}")
+    }
+
     pub fn set_title_fps(&self, #[allow(unused_variables)] fps: f64) {
         #[cfg(not(target_arch = "wasm32"))]
-        self.window.set_title(&format!("Redixel - FPS: {fps:.0}"));
+        self.window.set_title(&Self::format_title(fps));
+    }
+
+    pub fn should_handle(event: &WindowEvent) -> bool {
+        matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
+    }
+
+    pub fn is_window_event(&self, event: &WindowEvent) -> bool {
+        Self::should_handle(event)
     }
 
     pub fn handle_window_event(&self, event: &WindowEvent) {
@@ -79,8 +91,35 @@ impl WindowManager {
             _ => {}
         }
     }
+}
 
-    pub fn is_window_event(&self, event: &WindowEvent) -> bool {
-        matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use winit::dpi::PhysicalPosition;
+    use winit::event::DeviceId;
+    use winit::event::PointerSource;
+    use winit::event::WindowEvent;
+
+    #[test]
+    fn test_fps_title_formatting() {
+        assert_eq!(WindowManager::format_title(60.0), "Redixel - FPS: 60");
+        assert_eq!(WindowManager::format_title(59.99), "Redixel - FPS: 60");
+        assert_eq!(WindowManager::format_title(144.1), "Redixel - FPS: 144");
+    }
+
+    #[test]
+    fn test_event_filter_logic() {
+        let event_focused: WindowEvent = WindowEvent::Focused(true);
+
+        let event_cursor: WindowEvent = WindowEvent::PointerMoved {
+            primary: true,
+            source: PointerSource::Mouse,
+            device_id: Some(DeviceId::from_raw(1)),
+            position: PhysicalPosition::new(0.0, 0.0),
+        };
+
+        assert!(WindowManager::should_handle(&event_focused));
+        assert!(!WindowManager::should_handle(&event_cursor));
     }
 }

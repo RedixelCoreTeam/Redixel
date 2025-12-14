@@ -19,6 +19,8 @@ use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
 use super::time::TimeManager;
 
+type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
+
 #[derive(Debug)]
 pub enum AppState {
     Loading,
@@ -31,9 +33,6 @@ pub enum AppState {
     },
 }
 
-type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
-
-#[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
     error_sink: SharedError,

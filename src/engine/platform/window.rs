@@ -67,6 +67,7 @@ impl WindowManager {
         self.window.request_redraw();
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn format_title(fps: f64) -> String {
         format!("Redixel - FPS: {fps:.0}")
     }

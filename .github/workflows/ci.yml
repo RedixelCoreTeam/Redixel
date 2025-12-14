@@ -82,7 +82,7 @@ jobs:
   #       run: cargo check --target wasm32-unknown-unknown --verbose
 
   gpu-smoke-tests:
-    name: GPU Test (${{ all.os }})
+    name: GPU Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

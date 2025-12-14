@@ -47,8 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added robust error propagation across the runtime, enabling graceful shutdown on failure.
   - Integrated `log` crate with `env_logger` (Desktop) and `console_log` (WASM) for structured logging and debugging.
 - **Fps Tracker and Limiting**:
-  - Implemented `FpsTracker` for precise frame timing, delta-time calculation, and performance monitoring.
-  - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
+- **Unit Tests for Core Logic:** Implemented comprehensive unit tests across key engine components:
+  - **`Runtime`**: Verifies core state management, fatal error capture, and reliable asynchronous communication channel (MPSC bridge) operation.
+  - **`TimeManager`**: Validates FPS calculation accuracy, frame limiting precision, correct target duration conversion, and reliable interval callback triggering.
+  - **`InputManager`**: Confirms accurate event filtering to distinguish between valid player inputs (Keyboard, Pointer, Scroll) and system events.
+  - **`WindowManager`**: Ensures precise FPS title formatting and correct event filtering logic for window-specific events (e.g., Focus, Scaling).
+- **Continuous Integration (CI) Enhancements:**
+  - Integrated essential Linux graphics dependencies (`xvfb` and `mesa-vulkan-drivers`) to enable integration testing of graphics-dependent code via CPU-emulated Vulkan.
 
 ### Changed
 

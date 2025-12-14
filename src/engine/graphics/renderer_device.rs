@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use wgpu::Adapter;
 use wgpu::Backends;
-use wgpu::CreateSurfaceError;
 use wgpu::Device;
 use wgpu::ExperimentalFeatures;
 use wgpu::Features;
@@ -39,30 +38,9 @@ pub struct RendererDevice {
 impl RendererDevice {
     pub async fn new(window: Arc<dyn Window>) -> Result<Self, RedixelError> {
         let instance: Instance = Self::create_instance();
-
-        #[cfg(not(target_os = "windows"))]
         let surface: Surface = Self::create_surface(&instance, &window)?;
-
-        #[cfg(target_os = "windows")]
-        // Winit's Windows backend explicitly checks thread identity. If `raw_window_handle`
-        // is called outside the event loop thread, it returns `HandleError::Unavailable`
-        // to prevent race conditions (see `winit::platform::windows`).
-        // Since we are initializing on a background thread but can guarantee the window
-        // remains valid during this process, we use `window_handle_any_thread` to
-        // bypass Winit's thread guard and access the raw HWND directly.
-        let surface: Surface = unsafe {
-            use wgpu::SurfaceTargetUnsafe;
-            use wgpu::rwh::HasDisplayHandle;
-            use winit::platform::windows::WindowExtWindows;
-            instance.create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
-                raw_display_handle: window.display_handle()?.as_raw(),
-                raw_window_handle: window.window_handle_any_thread()?.as_raw(),
-            })
-        }?;
-
         let adapter: Adapter = Self::select_adapter(&instance, &surface).await?;
         let (device, queue): (Device, Queue) = Self::create_device(&adapter).await?;
-
         let config: SurfaceConfiguration = Self::create_surface_config(&window, &surface, &adapter);
         surface.configure(&device, &config);
 
@@ -81,9 +59,31 @@ impl RendererDevice {
         })
     }
 
-    #[allow(dead_code)]
-    fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, CreateSurfaceError> {
-        instance.create_surface(window.clone()) // TODO: No need for cloning.
+    fn create_surface(instance: &Instance, window: &Arc<dyn Window>) -> Result<Surface<'static>, RedixelError> {
+        #[cfg(target_os = "windows")]
+        {
+            // Winit's Windows backend explicitly checks thread identity. If `raw_window_handle`
+            // is called outside the event loop thread, it returns `HandleError::Unavailable`
+            // to prevent race conditions (see `winit::platform::windows`).
+            // Since we are initializing on a background thread but can guarantee the window
+            // remains valid during this process, we use `window_handle_any_thread` to
+            // bypass Winit's thread guard and access the raw HWND directly.
+            use wgpu::SurfaceTargetUnsafe;
+            use wgpu::rwh::HasDisplayHandle;
+            use winit::platform::windows::WindowExtWindows;
+
+            unsafe {
+                instance
+                    .create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
+                        raw_display_handle: window.display_handle()?.as_raw(),
+                        raw_window_handle: window.window_handle_any_thread()?.as_raw(),
+                    })
+                    .map_err(RedixelError::from)
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        instance.create_surface(window.clone()).map_err(RedixelError::from)
     }
 
     async fn select_adapter(instance: &Instance, surface: &Surface<'static>) -> Result<Adapter, RequestAdapterError> {

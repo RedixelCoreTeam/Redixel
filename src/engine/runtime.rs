@@ -21,6 +21,8 @@ use super::platform::input::InputManager;
 use super::platform::window::WindowManager;
 use super::time::TimeManager;
 
+type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
+
 #[derive(Debug)]
 pub enum AppState {
     Loading,
@@ -33,9 +35,6 @@ pub enum AppState {
     },
 }
 
-type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
-
-#[derive(Debug)]
 pub struct Runtime {
     app_state: AppState,
     error_sink: SharedError,
@@ -193,5 +192,64 @@ impl ApplicationHandler for Runtime {
                 _ => {}
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mpsc::TryRecvError;
+    use std::cell::Ref;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    fn create_test_runtime() -> (Runtime, SharedError) {
+        let error_sink: Rc<RefCell<Option<RedixelError>>> = Rc::new(RefCell::new(None));
+        let runtime: Runtime = Runtime::new(error_sink.clone());
+        (runtime, error_sink)
+    }
+
+    #[test]
+    fn test_initial_state_is_initializing() {
+        let (runtime, error_sink): (Runtime, SharedError) = create_test_runtime();
+        assert!(matches!(runtime.app_state, AppState::Initializing));
+        assert!(error_sink.borrow().is_none());
+    }
+
+    #[test]
+    fn test_fatal_error_capture() {
+        let (runtime, error_sink): (Runtime, SharedError) = create_test_runtime();
+
+        Runtime::capture_fatal_error(&runtime.error_sink, RedixelError::Dummy);
+        let captured: Ref<Option<RedixelError>> = error_sink.borrow();
+
+        assert!(captured.is_some());
+        assert!(matches!(captured.as_ref().unwrap(), RedixelError::Dummy));
+    }
+
+    #[test]
+    fn test_async_bridge_connectivity() {
+        let (runtime, _): (Runtime, SharedError) = create_test_runtime();
+
+        runtime
+            .async_bridge_tx
+            .send(Err(RedixelError::Dummy))
+            .expect("The communication channel should be open");
+
+        let received: Result<BridgePayload, TryRecvError> = runtime.async_bridge_rx.try_recv();
+        assert!(received.is_ok(), "Runtime should have received the sent message");
+    }
+
+    #[test]
+    fn test_complete_initialization_handles_bridge_error() {
+        let (mut runtime, _): (Runtime, SharedError) = create_test_runtime();
+        runtime.app_state = AppState::Loading;
+
+        runtime.async_bridge_tx.send(Err(RedixelError::Dummy)).unwrap();
+        let result: Result<(), RedixelError> = runtime.complete_initialization();
+
+        assert!(result.is_err(), "The error from the channel should be propagated");
+        assert!(matches!(result.unwrap_err(), RedixelError::Dummy));
+        assert!(matches!(runtime.app_state, AppState::Loading));
     }
 }

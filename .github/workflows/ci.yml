@@ -8,19 +8,75 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  quality:
-    name: Code Quality
-    runs-on: windows-latest
+  check-format:
+    name: Format
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Bootstrap Toolchain
+      - name: Setup Rust
         run: rustup show
 
-      - name: Check Formatting
+      - name: Run rustfmt
         run: cargo fmt -- --check
+
+  test-suite:
+    name: Test Suite (${{ matrix.os }})
+    needs: check-format
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Graphics Deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev libxkbcommon-x11-0 xvfb mesa-vulkan-drivers
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run Clippy
         run: cargo clippy -- -D warnings
+
+      - name: Run Tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          export WGPU_BACKEND=vulkan
+          xvfb-run --auto-servernum cargo test --verbose
+
+      - name: Run Tests (Windows)
+        if: runner.os == 'Windows'
+        run: cargo test --verbose
+
+  check-wasm:
+    name: WASM Check
+    needs: check-format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
+      - name: Verify WASM Compilation
+        run: cargo check --target wasm32-unknown-unknown --verbose

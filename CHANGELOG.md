@@ -46,8 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented a centralized `RedixelError` enum using `thiserror` to capture and contextually wrap errors from `winit`, `wgpu`, and `web-sys`.
   - Added robust error propagation across the runtime, enabling graceful shutdown on failure.
   - Integrated `log` crate with `env_logger` (Desktop) and `console_log` (WASM) for structured logging and debugging.
-- **Fps Tracker and Limiting**:
-  - Implemented `FpsTracker` for precise frame timing, delta-time calculation, and performance monitoring.
+- **TimeManager and Limiting**:
+  - Implemented `TimeManager` for precise frame timing, delta-time calculation, and performance monitoring.
   - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
 - **Configuration System**:
   - Implemented **`EngineSettings`** as a thread-safe global singleton (`OnceLock`, `RwLock`) enabling concurrent access from any thread.
@@ -55,6 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added a generic `get_path<T>` utility for querying nested settings using dot-notation strings (e.g., `"renderer.present_mode"`).
   - Implemented logic to map integer configuration values directly to `wgpu` enums (Backend, PresentMode).
   - Added `CONFIG.md` documentation comprehensively detailing the `app`, `window`, and `renderer` schemas and their default behaviors.
+- **Unit Tests for Core Logic:** Implemented comprehensive unit tests across key engine components:
+  - **`Runtime`**: Verifies core state management, fatal error capture, and reliable asynchronous communication channel (MPSC bridge) operation.
+  - **`TimeManager`**: Validates FPS calculation accuracy, frame limiting precision, correct target duration conversion, and reliable interval callback triggering.
+  - **`InputManager`**: Confirms accurate event filtering to distinguish between valid player inputs (Keyboard, Pointer, Scroll) and system events.
+  - **`WindowManager`**: Ensures precise FPS title formatting and correct event filtering logic for window-specific events (e.g., Focus, Scaling).
+- **Continuous Integration (CI) Enhancements:**
+  - Integrated essential Linux graphics dependencies (`xvfb` and `mesa-vulkan-drivers`) to enable integration testing of graphics-dependent code via CPU-emulated Vulkan.
 
 ### Changed
 

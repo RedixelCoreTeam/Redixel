@@ -123,6 +123,18 @@ google-chrome \
 
 > Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
 
+## Testing
+
+The Redixel test suite is focused on validating the pure CPU logic (e.g., input handling, runtime state, and time calculation).
+
+### Running Unit Tests
+
+To execute all available logic tests:
+
+```sh
+cargo test
+```
+
 ## Roadmap
 
 The project is currently in **Phase 1 (Foundation & Lifecycle)**.

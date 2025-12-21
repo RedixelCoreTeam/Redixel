@@ -3,6 +3,8 @@ use serde_json::Value;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::{OnceLock, RwLock};
+use wgpu::PresentMode;
+use wgpu::Backends;
 
 #[derive(Debug)]
 pub struct EngineSettings {
@@ -136,5 +138,61 @@ impl EngineSettings {
         }
 
         serde_json::from_value(current_value.clone()).unwrap_or(default)
+    }
+}
+
+/// Converts `EngineSettings` to a `wgpu::PresentMode`.
+///
+/// Reads the presentation mode configuration from the settings using the dot-notation path
+/// `"renderer.present_mode"` and maps the numeric value to the corresponding `PresentMode` variant.
+/// Borrow settings lock guard and pass the reference of the dereferenced EngineSettings value.
+/// 
+/// # Usage Examples
+///
+/// Using `.into()` with type inference:
+/// let present_mode: PresentMode = (&*EngineSettings::global_read()).into();
+///
+/// Using explicit `From::from()`:
+/// let present_mode = PresentMode::from(&*EngineSettings::global_read());
+impl From<&EngineSettings> for PresentMode {
+    fn from(value: &EngineSettings) -> Self {
+        match value.get_path("renderer.present_mode", 1) {
+            0 => PresentMode::AutoVsync,
+            1 => PresentMode::AutoNoVsync,
+            2 => PresentMode::Fifo,
+            3 => PresentMode::FifoRelaxed,
+            4 => PresentMode::Immediate,
+            5 => PresentMode::Mailbox,
+            _ => PresentMode::Fifo,
+        }
+    }
+}
+
+/// Converts `EngineSettings` to a `wgpu::Backends`.
+///
+/// Reads the renderer backend configuration from the settings using the dot-notation path
+/// `"renderer.backend"` and maps the numeric value to the corresponding `Backends` variant.
+/// Borrow settings lock guard and pass the reference of the dereferenced EngineSettings value.
+///
+/// # Usage Examples
+///
+/// Using `.into()` with type inference:
+/// let backend: Backends = (&*EngineSettings::global_read()).into();
+///
+/// Using explicit `From::from()`:
+/// let backend = Backends::from(&*EngineSettings::global_read());
+impl From<&EngineSettings> for Backends {
+    fn from(value: &EngineSettings) -> Self {
+        match value.get_path("renderer.backend", 0) {
+            0 => Backends::all(),
+            1 => Backends::VULKAN,
+            2 => Backends::GL,
+            3 => Backends::METAL,
+            4 => Backends::DX12,
+            5 => Backends::BROWSER_WEBGPU,
+            6 => Backends::PRIMARY,
+            7 => Backends::SECONDARY,
+            _ => Backends::all(),
+        }
     }
 }

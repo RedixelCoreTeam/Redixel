@@ -3,8 +3,8 @@ use serde_json::Value;
 use std::fs::File;
 use std::io::BufReader;
 use std::sync::{OnceLock, RwLock};
-use wgpu::PresentMode;
 use wgpu::Backends;
+use wgpu::PresentMode;
 
 #[derive(Debug)]
 pub struct EngineSettings {
@@ -146,7 +146,7 @@ impl EngineSettings {
 /// Reads the presentation mode configuration from the settings using the dot-notation path
 /// `"renderer.present_mode"` and maps the numeric value to the corresponding `PresentMode` variant.
 /// Borrow settings lock guard and pass the reference of the dereferenced EngineSettings value.
-/// 
+///
 /// # Usage Examples
 ///
 /// Using `.into()` with type inference:

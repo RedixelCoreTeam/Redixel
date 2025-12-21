@@ -32,7 +32,7 @@ impl EngineSettings {
         match EngineSettings::global().read() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                log::warn!("Warning: EngineSettings lock was poisoned. Recovering...");
+                log::warn!("Warning: EngineSettings read lock was poisoned. Recovering...");
                 poisoned.into_inner()
             }
         }
@@ -49,7 +49,7 @@ impl EngineSettings {
         match EngineSettings::global().write() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                log::warn!("Warning: EngineSettings lock was poisoned. Recovering...");
+                log::warn!("Warning: EngineSettings write lock was poisoned. Recovering...");
                 poisoned.into_inner()
             }
         }

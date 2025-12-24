@@ -27,6 +27,8 @@ use winit::window::Window;
 
 use crate::engine::error::RedixelError;
 use crate::engine::settings::EngineSettings;
+use crate::engine::settings::RawBackend;
+use crate::engine::settings::RawPresentMode;
 
 #[derive(Debug)]
 pub struct RendererDevice {
@@ -54,7 +56,7 @@ impl RendererDevice {
     }
 
     fn create_instance() -> Instance {
-        let backend: Backends = Backends::from(&*EngineSettings::global_read());
+        let backend: Backends = RawBackend(EngineSettings::global_read().get_path("renderer.backend", 0)).into();
         Instance::new(&InstanceDescriptor {
             backends: backend,
             ..Default::default()
@@ -112,7 +114,8 @@ impl RendererDevice {
     }
 
     fn create_surface_config(window: &Arc<dyn Window>, surface: &Surface, adapter: &Adapter) -> SurfaceConfiguration {
-        let present_mode: PresentMode = PresentMode::from(&*EngineSettings::global_read());
+        let present_mode: PresentMode =
+            RawPresentMode(EngineSettings::global_read().get_path("renderer.present_mode", 1)).into();
 
         let size: PhysicalSize<u32> = window.surface_size();
         let surface_caps: SurfaceCapabilities = surface.get_capabilities(adapter);

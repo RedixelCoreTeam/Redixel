@@ -141,22 +141,13 @@ impl EngineSettings {
     }
 }
 
-/// Converts `EngineSettings` to a `wgpu::PresentMode`.
+/// Converts `RawPresent` to a `wgpu::PresentMode`.
 ///
-/// Reads the presentation mode configuration from the settings using the dot-notation path
-/// `"renderer.present_mode"` and maps the numeric value to the corresponding `PresentMode` variant.
-/// Borrow settings lock guard and pass the reference of the dereferenced EngineSettings value.
-///
-/// # Usage Examples
-///
-/// Using `.into()` with type inference:
-/// let present_mode: PresentMode = (&*EngineSettings::global_read()).into();
-///
-/// Using explicit `From::from()`:
-/// let present_mode = PresentMode::from(&*EngineSettings::global_read());
-impl From<&EngineSettings> for PresentMode {
-    fn from(value: &EngineSettings) -> Self {
-        match value.get_path("renderer.present_mode", 1) {
+/// Maps the numeric present_mode identifier to the corresponding `PresentMode` variant.
+pub struct RawPresentMode(pub u32);
+impl From<RawPresentMode> for PresentMode {
+    fn from(value: RawPresentMode) -> Self {
+        match value.0 {
             0 => PresentMode::AutoVsync,
             1 => PresentMode::AutoNoVsync,
             2 => PresentMode::Fifo,
@@ -168,22 +159,13 @@ impl From<&EngineSettings> for PresentMode {
     }
 }
 
-/// Converts `EngineSettings` to a `wgpu::Backends`.
+/// Converts `RawBackend` to a `wgpu::Backends`.
 ///
-/// Reads the renderer backend configuration from the settings using the dot-notation path
-/// `"renderer.backend"` and maps the numeric value to the corresponding `Backends` variant.
-/// Borrow settings lock guard and pass the reference of the dereferenced EngineSettings value.
-///
-/// # Usage Examples
-///
-/// Using `.into()` with type inference:
-/// let backend: Backends = (&*EngineSettings::global_read()).into();
-///
-/// Using explicit `From::from()`:
-/// let backend = Backends::from(&*EngineSettings::global_read());
-impl From<&EngineSettings> for Backends {
-    fn from(value: &EngineSettings) -> Self {
-        match value.get_path("renderer.backend", 0) {
+/// Maps the numeric backend identifier to the corresponding `Backends` variant.
+pub struct RawBackend(pub u32);
+impl From<RawBackend> for Backends {
+    fn from(value: RawBackend) -> Self {
+        match value.0 {
             0 => Backends::all(),
             1 => Backends::VULKAN,
             2 => Backends::GL,

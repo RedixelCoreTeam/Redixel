@@ -5,7 +5,10 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::Window;
 use winit::window::WindowAttributes;
 
+use winit::dpi::LogicalSize;
+
 use crate::engine::error::RedixelError;
+use crate::engine::settings::EngineSettings;
 
 #[derive(Debug)]
 pub struct WindowManager {
@@ -22,7 +25,17 @@ impl WindowManager {
     }
 
     fn create_window_attributes() -> Result<WindowAttributes, RedixelError> {
-        let attributes: WindowAttributes = WindowAttributes::default().with_title("Redixel");
+        let settings: std::sync::RwLockReadGuard<'_, EngineSettings> = EngineSettings::global_read();
+
+        let title: String = settings.get_path("app.name", "Redixel".to_string());
+        let width: u32 = settings.get_path("window.width", 600);
+        let height: u32 = settings.get_path("window.height", 500);
+        // TODO implementar fullscreen de acordo com winit::monitor::Fullscreen;
+        // let fullscreen: bool = settings.get_path("window.fullscreen", false);
+
+        let attributes: WindowAttributes = WindowAttributes::default()
+            .with_title(title)
+            .with_surface_size(LogicalSize::new(width, height));
         Self::apply_platform_attributes(attributes)
     }
 

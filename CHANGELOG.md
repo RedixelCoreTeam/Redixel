@@ -49,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **TimeManager and Limiting**:
   - Implemented `TimeManager` for precise frame timing, delta-time calculation, and performance monitoring.
   - Added a high-precision **hybrid sleep/spin-lock** mechanism to enforce target framerates with minimal CPU overhead.
+- **Configuration System**:
+  - Implemented **`EngineSettings`** as a thread-safe global singleton (`OnceLock`, `RwLock`) enabling concurrent access from any thread.
+  - Integrated `serde` and `serde_json` for robust parsing of external `config.json` files with automatic error recovery and logging.
+  - Added a generic `get_path<T>` utility for querying nested settings using dot-notation strings (e.g., `"renderer.present_mode"`).
+  - Implemented logic to map integer configuration values directly to `wgpu` enums (Backend, PresentMode).
+  - Added `CONFIG.md` documentation comprehensively detailing the `app`, `window`, and `renderer` schemas and their default behaviors.
 - **Unit Tests for Core Logic:** Implemented comprehensive unit tests across key engine components:
   - **`Runtime`**: Verifies core state management, fatal error capture, and reliable asynchronous communication channel (MPSC bridge) operation.
   - **`TimeManager`**: Validates FPS calculation accuracy, frame limiting precision, correct target duration conversion, and reliable interval callback triggering.

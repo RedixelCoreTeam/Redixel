@@ -13,7 +13,7 @@
 - [ ] **Basic Input & Window Control:** Handle Exit (ESC/Close), Fullscreen toggle, and Cleanup.
 - [ ] **Logging:** Standardize logs across the engine (`log` crate).
 - [x] **Testing Infrastructure:** Establish unit testing patterns and ensure core logic (Time, Config) is covered by `cargo test`.
-- [ ] **Engine Configuration:** Startup settings struct (Window title, Resolution, VSync, Backend).
+- [x] **Engine Configuration:** Startup settings struct (Window title, Resolution, VSync, Backend).
 
 ## **Phase 2 — The Graphics Core**
 

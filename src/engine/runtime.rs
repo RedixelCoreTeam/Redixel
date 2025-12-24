@@ -12,6 +12,8 @@ use winit::window::WindowId;
 
 use wgpu::SurfaceError;
 
+use crate::engine::settings::EngineSettings;
+
 use super::error::RedixelError;
 use super::error::SharedError;
 use super::graphics::renderer::Renderer;
@@ -100,7 +102,7 @@ impl Runtime {
 
             // Initializing fps tracker
             let mut time_manager: TimeManager = TimeManager::new();
-            time_manager.set_target_fps(60.0); // TODO: fps hardcoded, create AppSettings
+            time_manager.set_target_fps(EngineSettings::global_read().get_path("window.target_fps", 60.0));
 
             self.app_state = AppState::Running {
                 input_manager: InputManager::new(),

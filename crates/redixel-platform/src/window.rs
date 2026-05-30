@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use winit::dpi::{LogicalSize, PhysicalSize};
+#[cfg(not(target_arch = "wasm32"))]
+use winit::dpi::LogicalSize;
+use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes};
@@ -135,7 +137,11 @@ impl WindowManager {
         Self::set_css_property(&body_style, "margin", "0")?;
         Self::set_css_property(&body_style, "padding", "0")?;
         Self::set_css_property(&body_style, "overflow", "hidden")?;
-        Self::set_css_property(&canvas_style, "display", "block")?;
+
+        Self::set_css_property(&body_style, "display", "flex")?;
+        Self::set_css_property(&body_style, "justify-content", "center")?;
+        Self::set_css_property(&body_style, "align-items", "center")?;
+        Self::set_css_property(&body_style, "height", "100vh")?;
 
         if config.fullscreen {
             Self::set_css_property(&canvas_style, "width", "100vw")?;
@@ -143,7 +149,6 @@ impl WindowManager {
         } else {
             Self::set_css_property(&canvas_style, "width", &format!("{}px", config.width))?;
             Self::set_css_property(&canvas_style, "height", &format!("{}px", config.height))?;
-            Self::set_css_property(&canvas_style, "margin", "0 auto")?;
         }
 
         let web_attrs = WindowAttributesWeb::default().with_canvas(Some(canvas));

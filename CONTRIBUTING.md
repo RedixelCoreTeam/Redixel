@@ -68,8 +68,8 @@ use wgpu::Device;
 use winit::event::WindowEvent;
 use winit::window::Window;
 
-use super::graphics::Renderer;
-use crate::engine::RedixelError;
+use redixel_core::RedixelError;
+use redixel_renderer::Renderer;
 ```
 
 ### 3\. Type Definitions & Return Types

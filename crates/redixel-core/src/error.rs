@@ -1,25 +1,18 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use thiserror::Error;
 
 use wgpu::CreateSurfaceError;
 use wgpu::RequestAdapterError;
 use wgpu::RequestDeviceError;
 use wgpu::SurfaceError;
-#[cfg(target_os = "windows")]
-use wgpu::rwh::HandleError;
 
 use winit::error::EventLoopError;
 use winit::error::RequestError;
 
-#[cfg(target_arch = "wasm32")]
-use log::SetLoggerError;
+#[cfg(target_os = "windows")]
+use wgpu::rwh::HandleError;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
-
-use thiserror::Error;
-
-pub type SharedError = Rc<RefCell<Option<RedixelError>>>;
 
 #[derive(Error, Debug)]
 pub enum RedixelError {
@@ -45,23 +38,23 @@ pub enum RedixelError {
     #[error("Graphics surface error: {0}")]
     Surface(#[from] SurfaceError),
 
-    #[cfg(target_arch = "wasm32")]
-    #[error("Failed to initialize logger: {0}")]
-    LoggerError(#[from] SetLoggerError),
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Config parse error: {0}")]
+    Config(#[from] serde_json::Error),
 
     #[cfg(target_arch = "wasm32")]
-    #[error("JavaScript Exception: {0:?}")]
+    #[error("JavaScript exception: {0}")]
     JsException(&'static str),
 
-    #[cfg(test)]
-    #[error("Dummy error for testing purposes")]
+    #[error("Dummy error (test only)")]
     Dummy,
 }
 
 #[cfg(target_arch = "wasm32")]
 impl From<RedixelError> for JsValue {
     fn from(err: RedixelError) -> JsValue {
-        let message = err.to_string();
-        JsValue::from_str(&message)
+        JsValue::from_str(&err.to_string())
     }
 }

@@ -4,7 +4,7 @@
 
 **Goal:** Establish the OS communication, main loop, user entry point, and platform stability.
 
-- [x] **Project Structure:** Established the library/binary separation and module hierarchy (`engine`, `platform`, `graphics`) to support future expansion.
+- [x] **Project Structure:** Established a strict Cargo Workspace architecture (`redixel-core`, `platform`, `renderer`, `runtime`) enforcing unidirectional dependency flow to support future expansion.
 - [x] **Window Creation:** Implemented `WindowManager` with `winit` to handle OS events and cross-platform window initialization (Native/WASM).
 - [x] **Renderer Module:** Initialized the `wgpu` context (Instance, Surface, Device) and established the basic Clear Color render pass.
 - [x] **Error Handling:** Unified system (`RedixelError`) and graceful propagation (Main/WASM).

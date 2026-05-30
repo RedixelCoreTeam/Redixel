@@ -1,0 +1,17 @@
+[package]
+name = "redixel-renderer"
+description = "WGPU-backed renderer for the Redixel engine."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+redixel-core = { workspace = true }
+log = { workspace = true }
+wgpu = { workspace = true }
+winit = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "27.0.1", features = ["webgl"] }

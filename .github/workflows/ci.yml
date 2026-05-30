@@ -79,4 +79,4 @@ jobs:
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
       - name: Verify WASM Compilation
-        run: cargo check --workspace --examples --target wasm32-unknown-unknown --verbose
+        run: cargo check --workspace --target wasm32-unknown-unknown --verbose

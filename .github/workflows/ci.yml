@@ -54,11 +54,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           export WGPU_BACKEND=vulkan
-          xvfb-run --auto-servernum cargo test --verbose
+          xvfb-run --auto-servernum cargo test --workspace --verbose
 
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
-        run: cargo test --verbose
+        run: cargo test --workspace --verbose
 
   check-wasm:
     name: WASM Check
@@ -79,4 +79,4 @@ jobs:
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
       - name: Verify WASM Compilation
-        run: cargo check --target wasm32-unknown-unknown --verbose
+        run: cargo check --workspace --examples --target wasm32-unknown-unknown --verbose

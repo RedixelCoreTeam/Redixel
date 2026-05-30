@@ -72,3 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Updated Application Entry Points:
   - **Desktop (`main`)**: Now returns `Result` and prints formatted fatal errors to `stderr` via the logging system.
   - **WASM (`init`)**: Now implements `From<RedixelError>` for `JsValue`, ensuring Rust errors are correctly mapped and displayed as exceptions in the Browser Console.
+- **Architectural Overhaul (Cargo Workspace):** Migrated the monolithic structure into a strict Cargo Workspace (`redixel-core`, `redixel-platform`, `redixel-renderer`, `redixel-runtime`).
+- **Public API Facade:** Introduced the `redixel` crate to act as a clean, unified public API for end-users, hiding internal complexity.
+- **Pure Rust WebAssembly:** Eliminated external `index.html` and JavaScript bindings setup. The engine now dynamically injects the `<canvas>` into the DOM and enforces styling purely via Rust (`web-sys`).
+- Updated `winit` Web API integration to safely build `WindowAttributesWeb` without relying on deprecated trait extensions.
+- Removed dead code (e.g., `SetLoggerError` from engine error variants) to ensure the framework remains unopinionated about the consumer's logging setup.

@@ -43,20 +43,16 @@ Abstracts the GPU hardware via WGPU.
 ## Directory Structure
 
 ```text
-src/
-├── engine/
-│   ├── graphics/               # GPU interaction layer
-│   │   ├── renderer.rs         # Frame rendering & Command encoding
-│   │   ├── renderer_device.rs  # WGPU Device, Queue & Surface initialization
-│   │   └── mod.rs              # Graphics module definitions
-│   ├── platform/               # OS interaction layer
-│   │   ├── input.rs            # Input event sanitization
-│   │   ├── window.rs           # Window lifecycle management
-│   │   └── mod.rs              # Platform module definitions
-│   ├── mod.rs                  # Engine module definitions
-│   └── runtime.rs              # Main Application Handler (The Engine Loop)
-├── lib.rs                      # Library entry point (init)
-└── main.rs                     # Binary entry point (bootstrapping)
+redixel/
+├── Cargo.toml                  # Workspace Root Configuration
+├── crates/
+│   ├── redixel-core/           # Base types, errors, no heavy dependencies
+│   ├── redixel-platform/       # Winit: window, input, web-sys DOM injection
+│   ├── redixel-renderer/       # Wgpu: GPU device, render pass, commands
+│   ├── redixel-runtime/        # Loop, AppState, TimeManager, Settings
+│   └── redixel/                # Public facade API (pub use ...)
+└── examples/
+    └── hello_triangle/         # End-user application example
 ```
 
 ## Getting Started
@@ -76,52 +72,20 @@ cargo run
 
 ### Running on Web (WASM)
 
-1.  **Install wasm-pack:**
+Redixel uses a pure-Rust pipeline for WebAssembly, requiring no manual HTML or JS files.
+
+1.  **Install the WASM target and server runner:**
 
     ```sh
-    cargo install wasm-pack
+    rustup target add wasm32-unknown-unknown
+    cargo install wasm-server-runner
     ```
 
-2.  **Build for the web target:**
-
+2.  **Run the example:**
     ```sh
-    wasm-pack build --target web
+    cargo run --target wasm32-unknown-unknown -p hello_triangle
     ```
-
-3.  **Serve the application:**
-
-    ```sh
-    python3 -m http.server 8000
-    ```
-
-    Open your browser at `http://localhost:8000`.
-
-### ⚠️ WebGPU on Linux (Chromium-based browsers)
-
-On Linux, **WebGPU is not fully enabled by default** on Chrome, Edge, Chromium, Opera, or Brave.
-As documented in the official GPUWeb Implementation Status, Linux support is **behind flags**.
-
-To run Redixel with WebGPU enabled on Linux, launch your browser with:
-
-```sh
-microsoft-edge \
-  --enable-unsafe-webgpu \
-  --ozone-platform=x11 \
-  --use-angle=vulkan \
-  --enable-features=Vulkan,VulkanFromANGLE
-```
-
-Or for Chrome/Chromium:
-
-```sh
-google-chrome \
-  --enable-unsafe-webgpu \
-  --ozone-platform=x11 \
-  --use-angle=vulkan \
-  --enable-features=Vulkan,VulkanFromANGLE
-```
-
-> Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
+    This will automatically compile, generate bindings and start a local server.
 
 ## Testing
 

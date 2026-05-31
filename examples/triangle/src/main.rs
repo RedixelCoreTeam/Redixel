@@ -24,11 +24,11 @@ impl Game for Triangle {
 
         let half_size: f32 = triangle_size / 2.0;
 
-        let top: Vec2 = Vec2::new(center_x, center_y - half_size);
-        let left: Vec2 = Vec2::new(center_x - half_size, center_y + half_size);
-        let right: Vec2 = Vec2::new(center_x + half_size, center_y + half_size);
+        let p1: Vec2 = Vec2::new(center_x, center_y - half_size);
+        let p2: Vec2 = Vec2::new(center_x - half_size, center_y + half_size);
+        let p3: Vec2 = Vec2::new(center_x + half_size, center_y + half_size);
 
-        ctx.draw_triangle(top, left, right, Color::rgb(1.0, 0.5, 0.0));
+        ctx.draw_triangle(p1, p2, p3, Color::rgb(1.0, 0.5, 0.0));
     }
 }
 

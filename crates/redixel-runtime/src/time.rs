@@ -68,6 +68,16 @@ impl TimeManager {
         self.enforce_cap();
     }
 
+    /// Returns the time in seconds between the last two frames.
+    pub fn delta_time(&self) -> f64 {
+        if self.fps > 0.0 { 1.0 / self.fps } else { 0.0 }
+    }
+
+    /// Returns the current FPS reading.
+    pub fn fps(&self) -> f64 {
+        self.fps
+    }
+
     /// Invokes `callback` with the current FPS at most once per `interval` seconds.
     pub fn every_seconds<F: FnOnce(f64)>(&mut self, interval: f64, callback: F) {
         let now: Instant = Instant::now();

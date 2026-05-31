@@ -1,5 +1,5 @@
 [package]
-name = "hello_triangle"
+name = "triangle"
 version.workspace = true
 edition.workspace = true
 publish = false

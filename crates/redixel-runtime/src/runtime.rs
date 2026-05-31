@@ -14,12 +14,15 @@ use winit::window::WindowId;
 
 use wgpu::SurfaceError;
 
+use redixel_core::Game;
 use redixel_core::RedixelError;
+use redixel_core::game::GameContext;
 use redixel_platform::InputManager;
 use redixel_platform::WindowManager;
 use redixel_renderer::Renderer;
 use redixel_renderer::RendererConfig;
 
+use crate::context::Context;
 use crate::settings::EngineSettings;
 use crate::settings::RawBackend;
 use crate::settings::RawPresentMode;
@@ -28,7 +31,7 @@ use crate::time::TimeManager;
 type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
 
 #[derive(Debug)]
-enum AppState {
+enum AppState<G: Game> {
     Initializing,
     Loading,
     Running {
@@ -36,24 +39,27 @@ enum AppState {
         input: InputManager,
         window: WindowManager,
         time: TimeManager,
+        context: Context,
+        game: G,
     },
 }
 
 /// Implements [`ApplicationHandler`] and drives the engine from creation to
 /// shutdown. Owns the application state and the async initialisation bridge.
-pub struct Runtime {
-    state: AppState,
+pub struct Runtime<G: Game> {
+    state: AppState<G>,
+    pending_game: Option<G>,
     fatal_error: Option<RedixelError>,
     bridge_tx: Sender<BridgePayload>,
     bridge_rx: Receiver<BridgePayload>,
 }
 
-impl Runtime {
-    pub fn new() -> Self {
+impl<G: Game> Runtime<G> {
+    pub fn new(game: G) -> Self {
         let (bridge_tx, bridge_rx) = mpsc::channel();
-
         Self {
             state: AppState::Initializing,
+            pending_game: Some(game),
             fatal_error: None,
             bridge_tx,
             bridge_rx,
@@ -61,7 +67,7 @@ impl Runtime {
     }
 
     /// Moves the stored fatal error out of the runtime.
-    /// Called by `redixel::init()` after `run_app` returns.
+    /// Called by `redixel::run()` after `run_app` returns.
     pub fn take_error(&mut self) -> Option<RedixelError> {
         self.fatal_error.take()
     }
@@ -74,7 +80,6 @@ impl Runtime {
 
     fn renderer_config() -> RendererConfig {
         let settings: RwLockReadGuard<'_, EngineSettings> = EngineSettings::global_read();
-
         RendererConfig {
             backends: settings.get_path("renderer.backend", RawBackend(0)).into(),
             present_mode: settings.get_path("renderer.present_mode", RawPresentMode(0)).into(),
@@ -89,7 +94,7 @@ impl Runtime {
 
         let task = async move {
             let result: Result<(Renderer, WindowManager), RedixelError> =
-                Renderer::new(window, config).await.map(|r| (r, window_mgr));
+                Renderer::new(window, config).await.map(|r: Renderer| (r, window_mgr));
 
             tx.send(result).ok();
             proxy.wake_up();
@@ -121,9 +126,7 @@ impl Runtime {
                 self.spawn_gpu_init(event_loop, wm);
                 self.state = AppState::Loading;
             }
-            Err(e) => {
-                self.abort(event_loop, e);
-            }
+            Err(e) => self.abort(event_loop, e),
         }
     }
 
@@ -138,14 +141,24 @@ impl Runtime {
             Ok((renderer, window)) => {
                 window.request_redraw();
 
+                let mut context: Context = Context::new();
                 let mut time: TimeManager = TimeManager::new();
                 time.set_target_fps(EngineSettings::global_read().get_path("window.target_fps", 60.0));
+
+                let mut game: G = self
+                    .pending_game
+                    .take()
+                    .expect("pending_game consumed before GPU was ready");
+
+                game.on_start(&mut context);
 
                 self.state = AppState::Running {
                     renderer: Box::new(renderer),
                     input: InputManager::new(),
                     window,
                     time,
+                    context,
+                    game,
                 };
 
                 log::info!("[3/3] Redixel is running.");
@@ -159,6 +172,8 @@ impl Runtime {
             input,
             window,
             time,
+            context,
+            game,
         } = &mut self.state
         else {
             if matches!(self.state, AppState::Loading) {
@@ -179,10 +194,18 @@ impl Runtime {
 
             WindowEvent::RedrawRequested => {
                 time.begin_frame();
+                context.update_timing(time.delta_time(), time.fps());
+                game.on_update(context);
+
+                if context.should_exit() {
+                    event_loop.exit();
+                    return;
+                }
 
                 match renderer.render() {
                     Ok(()) => {}
 
+                    // Transient; skip the frame silently.
                     Err(RedixelError::Surface(SurfaceError::Timeout)) => {}
 
                     // The swap chain has been lost or is outdated; we must recreate it.
@@ -197,6 +220,8 @@ impl Runtime {
                     }
                 }
 
+                game.on_render(context);
+                context.reset_frame();
                 time.end_frame();
                 time.every_seconds(1.0, |fps: f64| window.set_title_fps(fps));
                 window.request_redraw();
@@ -209,13 +234,7 @@ impl Runtime {
     }
 }
 
-impl Default for Runtime {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ApplicationHandler for Runtime {
+impl<G: Game> ApplicationHandler for Runtime<G> {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
         if matches!(self.state, AppState::Initializing) {
             log::info!("Initializing Redixel Engine.");
@@ -239,39 +258,61 @@ mod tests {
     use super::*;
     use mpsc::TryRecvError;
 
+    struct Dummy;
+    impl Game for Dummy {
+        fn on_start(&mut self, _ctx: &mut dyn GameContext) {}
+        fn on_update(&mut self, _ctx: &mut dyn GameContext) {}
+        fn on_render(&mut self, _ctx: &mut dyn GameContext) {}
+    }
+
     #[test]
     fn initial_state_is_initializing() {
-        let rt: Runtime = Runtime::new();
+        let rt: Runtime<Dummy> = Runtime::new(Dummy);
         assert!(matches!(rt.state, AppState::Initializing));
         assert!(rt.fatal_error.is_none());
+        assert!(rt.pending_game.is_some());
     }
 
     #[test]
     fn bridge_channel_is_open() {
-        let rt: Runtime = Runtime::new();
-
+        let rt: Runtime<Dummy> = Runtime::new(Dummy);
         rt.bridge_tx
             .send(Err(RedixelError::Dummy))
             .expect("channel must be open at construction");
-
         assert!(rt.bridge_rx.try_recv().is_ok());
     }
 
     #[test]
     fn bridge_delivers_error_correctly() {
-        let rt: Runtime = Runtime::new();
+        let rt: Runtime<Dummy> = Runtime::new(Dummy);
         rt.bridge_tx.send(Err(RedixelError::Dummy)).unwrap();
-
         let received: Result<BridgePayload, TryRecvError> = rt.bridge_rx.try_recv();
         assert!(matches!(received.unwrap(), Err(RedixelError::Dummy)));
     }
 
     #[test]
     fn take_error_moves_and_clears() {
-        let mut rt: Runtime = Runtime::new();
+        let mut rt: Runtime<Dummy> = Runtime::new(Dummy);
         rt.fatal_error = Some(RedixelError::Dummy);
-
         assert!(matches!(rt.take_error(), Some(RedixelError::Dummy)));
         assert!(rt.fatal_error.is_none());
+    }
+
+    #[test]
+    fn context_exit_flag_roundtrip() {
+        let mut ctx: Context = Context::new();
+        assert!(!ctx.should_exit());
+        ctx.exit();
+        assert!(ctx.should_exit());
+        ctx.reset_frame();
+        assert!(!ctx.should_exit());
+    }
+
+    #[test]
+    fn context_timing_update() {
+        let mut ctx: Context = Context::new();
+        ctx.update_timing(0.016, 62.5);
+        assert!((ctx.delta_time() - 0.016).abs() < 1e-9);
+        assert!((ctx.fps() - 62.5).abs() < 1e-9);
     }
 }

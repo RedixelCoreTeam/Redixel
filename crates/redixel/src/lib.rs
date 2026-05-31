@@ -2,6 +2,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 pub use redixel_core::RedixelError;
 pub use redixel_core::{Game, GameContext};
+pub use redixel_math::{Color, Mat4, Vec2};
 pub use redixel_platform::{InputManager, WindowManager};
 pub use redixel_renderer::{Renderer, RendererConfig};
 pub use redixel_runtime::{EngineSettings, Runtime, TimeManager};

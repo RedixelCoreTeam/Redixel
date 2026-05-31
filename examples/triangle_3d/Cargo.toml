@@ -1,5 +1,5 @@
 [package]
-name = "clear_color"
+name = "triangle_3d"
 version.workspace = true
 edition.workspace = true
 publish = false

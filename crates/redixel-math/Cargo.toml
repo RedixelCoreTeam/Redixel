@@ -1,0 +1,11 @@
+[package]
+name = "redixel-math"
+description = "High-performance linear algebra and math primitives for the Redixel engine."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+wgpu = { workspace = true }

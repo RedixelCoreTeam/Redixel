@@ -8,6 +8,7 @@ authors.workspace = true
 repository.workspace = true
 
 [dependencies]
+redixel-math = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
 wgpu = { workspace = true }
@@ -18,4 +19,3 @@ serde_json = { workspace = true }
 log = { workspace = true }
 wasm-bindgen = { workspace = true }
 console_log = { workspace = true }
-wgpu = { version = "27.0.1", features = ["webgl"] }

@@ -4,8 +4,8 @@ use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
 
-use redixel_platform::window::WindowConfig;
 use winit::application::ApplicationHandler;
+use winit::dpi::PhysicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::ActiveEventLoop;
 use winit::event_loop::EventLoopProxy;
@@ -19,10 +19,12 @@ use redixel_core::RedixelError;
 use redixel_core::game::GameContext;
 use redixel_platform::InputManager;
 use redixel_platform::WindowManager;
+use redixel_platform::window::WindowConfig;
 use redixel_renderer::Renderer;
 use redixel_renderer::RendererConfig;
 
 use crate::context::Context;
+use crate::context::DrawCommand;
 use crate::settings::EngineSettings;
 use crate::settings::RawBackend;
 use crate::settings::RawPresentMode;
@@ -30,18 +32,19 @@ use crate::time::TimeManager;
 
 type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
 
-#[derive(Debug)]
+struct RunningState<G: Game> {
+    renderer: Renderer,
+    input: InputManager,
+    window: WindowManager,
+    time: TimeManager,
+    context: Context,
+    game: G,
+}
+
 enum AppState<G: Game> {
     Initializing,
     Loading,
-    Running {
-        renderer: Box<Renderer>,
-        input: InputManager,
-        window: WindowManager,
-        time: TimeManager,
-        context: Context,
-        game: G,
-    },
+    Running(Box<RunningState<G>>),
 }
 
 /// Implements [`ApplicationHandler`] and drives the engine from creation to
@@ -143,7 +146,10 @@ impl<G: Game> Runtime<G> {
 
                 let mut context: Context = Context::new();
                 let mut time: TimeManager = TimeManager::new();
+                let initial_size: PhysicalSize<u32> = window.surface_size();
+
                 time.set_target_fps(EngineSettings::global_read().get_path("window.target_fps", 60.0));
+                context.update_state(initial_size.width, initial_size.height);
 
                 let mut game: G = self
                     .pending_game
@@ -152,14 +158,14 @@ impl<G: Game> Runtime<G> {
 
                 game.on_start(&mut context);
 
-                self.state = AppState::Running {
-                    renderer: Box::new(renderer),
+                self.state = AppState::Running(Box::new(RunningState {
+                    renderer,
                     input: InputManager::new(),
                     window,
                     time,
                     context,
                     game,
-                };
+                }));
 
                 log::info!("[3/3] Redixel is running.");
             }
@@ -167,15 +173,7 @@ impl<G: Game> Runtime<G> {
     }
 
     fn on_window_event(&mut self, event_loop: &dyn ActiveEventLoop, event: WindowEvent) {
-        let AppState::Running {
-            renderer,
-            input,
-            window,
-            time,
-            context,
-            game,
-        } = &mut self.state
-        else {
+        let AppState::Running(state) = &mut self.state else {
             if matches!(self.state, AppState::Loading) {
                 log::info!("[2/3] Awaiting GPU context…");
             }
@@ -189,20 +187,39 @@ impl<G: Game> Runtime<G> {
             }
 
             WindowEvent::SurfaceResized(size) => {
-                renderer.resize(size);
+                state.renderer.resize(size);
+                state.context.update_state(size.width, size.height);
             }
 
             WindowEvent::RedrawRequested => {
-                time.begin_frame();
-                context.update_timing(time.delta_time(), time.fps());
-                game.on_update(context);
+                state.time.begin_frame();
+                state.context.update_timing(state.time.delta_time(), state.time.fps());
 
-                if context.should_exit() {
+                state.game.on_update(&mut state.context);
+
+                if state.context.should_exit() {
                     event_loop.exit();
                     return;
                 }
 
-                match renderer.render() {
+                state.game.on_render(&mut state.context);
+
+                // Flush draw commands from context into renderer
+                for cmd in state.context.drain_commands() {
+                    match cmd {
+                        DrawCommand::ClearColor(c) => {
+                            state.renderer.set_clear_color(c);
+                        }
+                        DrawCommand::Rect { position, size, color } => {
+                            state.renderer.draw_rect(position, size, color);
+                        }
+                        DrawCommand::Triangle { p1, p2, p3, color } => {
+                            state.renderer.draw_triangle(p1, p2, p3, color);
+                        }
+                    }
+                }
+
+                match state.renderer.render() {
                     Ok(()) => {}
 
                     // Transient; skip the frame silently.
@@ -210,7 +227,7 @@ impl<G: Game> Runtime<G> {
 
                     // The swap chain has been lost or is outdated; we must recreate it.
                     Err(RedixelError::Surface(SurfaceError::Lost | SurfaceError::Outdated)) => {
-                        renderer.resize(window.surface_size());
+                        state.renderer.resize(state.window.surface_size());
                     }
 
                     Err(e) => {
@@ -220,17 +237,29 @@ impl<G: Game> Runtime<G> {
                     }
                 }
 
-                game.on_render(context);
-                context.reset_frame();
-                time.end_frame();
-                time.every_seconds(1.0, |fps: f64| window.set_title_fps(fps));
-                window.request_redraw();
+                state.context.reset_frame();
+                state.time.end_frame();
+
+                state
+                    .time
+                    .every_seconds(1.0, |fps: f64| state.window.set_title_fps(fps));
+
+                state.window.request_redraw();
             }
 
-            ref e if input.is_input_event(e) => input.handle(e),
-            ref e if window.is_window_event(e) => window.handle_window_event(e),
+            ref e if state.input.is_input_event(e) => state.input.handle(e),
+            ref e if state.window.is_window_event(e) => state.window.handle_window_event(e),
             _ => {}
         }
+    }
+}
+
+impl<G: Game> Default for Runtime<G>
+where
+    G: Default,
+{
+    fn default() -> Self {
+        Self::new(G::default())
     }
 }
 
@@ -257,6 +286,7 @@ impl<G: Game> ApplicationHandler for Runtime<G> {
 mod tests {
     use super::*;
     use mpsc::TryRecvError;
+    use redixel_math::{Color, Vec2};
 
     struct Dummy;
     impl Game for Dummy {
@@ -296,6 +326,18 @@ mod tests {
         rt.fatal_error = Some(RedixelError::Dummy);
         assert!(matches!(rt.take_error(), Some(RedixelError::Dummy)));
         assert!(rt.fatal_error.is_none());
+    }
+
+    #[test]
+    fn context_draw_commands_accumulate() {
+        let mut ctx: Context = Context::new();
+        ctx.draw_rect(Vec2::new(0.0, 0.0), Vec2::new(100.0, 50.0), Color::RED);
+        ctx.draw_rect(Vec2::new(10.0, 10.0), Vec2::new(20.0, 20.0), Color::BLUE);
+        assert_eq!(ctx.commands.len(), 2);
+
+        let drained: Vec<DrawCommand> = ctx.drain_commands().collect();
+        assert_eq!(drained.len(), 2);
+        assert!(ctx.commands.is_empty());
     }
 
     #[test]

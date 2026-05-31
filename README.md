@@ -85,7 +85,34 @@ Redixel uses a pure-Rust pipeline for WebAssembly, requiring no manual HTML or J
     ```sh
     cargo run --target wasm32-unknown-unknown -p triangle
     ```
-    This will automatically compile, generate bindings and start a local server.
+    This will automatically compile, generate bindings and start a local server at `http://127.0.0.1:1334`.
+
+### WebGPU on Linux (Chromium-based browsers)
+
+On Linux, **WebGPU is not fully enabled by default** on Chrome, Edge, Chromium, Opera, or Brave.
+As documented in the official GPUWeb Implementation Status, Linux support is **behind flags**.
+
+To run Redixel with WebGPU enabled on Linux, launch your browser with:
+
+```sh
+microsoft-edge \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+Or for Chrome/Chromium:
+
+```sh
+chromium \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+> Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
 
 ## Testing
 

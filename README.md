@@ -83,7 +83,7 @@ Redixel uses a pure-Rust pipeline for WebAssembly, requiring no manual HTML or J
 
 2.  **Run the example:**
     ```sh
-    cargo run --target wasm32-unknown-unknown -p hello_triangle
+    cargo run --target wasm32-unknown-unknown -p triangle
     ```
     This will automatically compile, generate bindings and start a local server.
 

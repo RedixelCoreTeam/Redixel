@@ -1,25 +1,25 @@
-use redixel::Color;
-use redixel::Game;
-use redixel::GameContext;
-use redixel::Vec2;
+use redixel::prelude::*;
 
 struct Triangle3d {
     rotation: f32,
 }
 
 impl Game for Triangle3d {
-    fn on_start(&mut self, _ctx: &mut dyn GameContext) {
+    type Action = ();
+
+    fn on_start(&mut self, _ctx: &mut dyn GameContext<Self::Action>) {
         log::info!("triangle_3d::on_start");
     }
 
-    fn on_update(&mut self, ctx: &mut dyn GameContext) {
+    fn on_update(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
         self.rotation += (ctx.delta_time() as f32) * 1.5;
     }
 
-    fn on_render(&mut self, ctx: &mut dyn GameContext) {
+    fn on_render(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
         ctx.clear_color(Color::rgb(0.1, 0.1, 0.12));
 
-        let (w, h) = ctx.screen_size();
+        let h: f32 = ctx.surface_height() as f32;
+        let w: f32 = ctx.surface_width() as f32;
         let center_x: f32 = w / 2.0;
         let center_y: f32 = h / 2.0;
         let scale: f32 = w.min(h) * 0.40;

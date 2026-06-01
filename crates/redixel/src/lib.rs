@@ -1,14 +1,15 @@
+use redixel_core::{Game, RedixelError};
+use redixel_runtime::EngineSettings;
+use redixel_runtime::Runtime;
 use winit::event_loop::{ControlFlow, EventLoop};
-
-pub use redixel_core::RedixelError;
-pub use redixel_core::{Game, GameContext};
-pub use redixel_math::{Color, Mat4, Vec2};
-pub use redixel_platform::{InputManager, WindowManager};
-pub use redixel_renderer::{Renderer, RendererConfig};
-pub use redixel_runtime::{EngineSettings, Runtime, TimeManager};
 
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::run_on_demand::EventLoopExtRunOnDemand;
+
+pub mod prelude {
+    pub use redixel_core::{Game, GameContext, KeyCode, KeyState};
+    pub use redixel_math::{Color, Mat4, Vec2};
+}
 
 pub fn run<G: Game>(game: G) -> Result<(), RedixelError> {
     if let Err(e) = EngineSettings::global_write().load("config/config.json") {

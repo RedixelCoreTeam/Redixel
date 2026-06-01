@@ -1,19 +1,20 @@
-use redixel::Color;
-use redixel::Game;
-use redixel::GameContext;
-use redixel::Vec2;
+use redixel::prelude::*;
 
 struct Triangle;
 
 impl Game for Triangle {
-    fn on_start(&mut self, _ctx: &mut dyn GameContext) {
+    type Action = ();
+
+    fn on_start(&mut self, _ctx: &mut dyn GameContext<Self::Action>) {
         log::info!("triangle::on_start");
     }
 
-    fn on_update(&mut self, _ctx: &mut dyn GameContext) {}
+    fn on_update(&mut self, _ctx: &mut dyn GameContext<Self::Action>) {}
 
-    fn on_render(&mut self, ctx: &mut dyn GameContext) {
-        let (w, h): (f32, f32) = ctx.screen_size();
+    fn on_render(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
+        let h: f32 = ctx.surface_height() as f32;
+        let w: f32 = ctx.surface_width() as f32;
+
         let center_x: f32 = w / 2.0;
         let center_y: f32 = h / 2.0;
 

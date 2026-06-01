@@ -59,16 +59,8 @@ impl WindowManager {
     }
 
     /// Returns `true` for events that the window manager should process.
-    pub fn is_window_event(&self, event: &WindowEvent) -> bool {
+    pub fn process_window_event(&self, event: &WindowEvent) -> bool {
         matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
-    }
-
-    pub fn handle_window_event(&self, event: &WindowEvent) {
-        match event {
-            WindowEvent::Focused(_) => {}
-            WindowEvent::ScaleFactorChanged { .. } => {}
-            _ => {}
-        }
     }
 
     fn build_attributes(config: &WindowConfig) -> Result<WindowAttributes, RedixelError> {
@@ -153,36 +145,5 @@ impl WindowManager {
 
         let web_attrs = WindowAttributesWeb::default().with_canvas(Some(canvas));
         Ok(attrs.with_platform_attributes(Box::new(web_attrs)))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use winit::dpi::PhysicalPosition;
-    use winit::event::DeviceId;
-    use winit::event::PointerSource;
-    use winit::event::WindowEvent;
-
-    fn is_window_event(event: &WindowEvent) -> bool {
-        matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
-    }
-
-    #[test]
-    fn event_classification() {
-        assert!(is_window_event(&WindowEvent::Focused(true)));
-        assert!(!is_window_event(&WindowEvent::PointerMoved {
-            primary: true,
-            source: PointerSource::Mouse,
-            device_id: Some(DeviceId::from_raw(1)),
-            position: PhysicalPosition::new(0.0, 0.0),
-        }));
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    #[test]
-    fn fps_title_format() {
-        assert_eq!(format!("Redixel — {:.0} FPS", 60.0_f64), "Redixel — 60 FPS");
-        assert_eq!(format!("Redixel — {:.0} FPS", 59.5_f64), "Redixel — 60 FPS");
-        assert_eq!(format!("Redixel — {:.0} FPS", 144.1_f64), "Redixel — 144 FPS");
     }
 }

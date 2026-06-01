@@ -1,82 +1,90 @@
-use redixel_math::{Color, Vec2};
+use redixel_math::Color;
+use redixel_math::Vec2;
 
 use crate::RedixelError;
+use crate::input::InputAction;
+use crate::input::KeyCode;
 
 /// The entry point for user game logic.
 ///
-/// Implement this trait on your own struct and pass it to [`redixel::run`].
-/// The engine calls these methods in the following order each session:
-///
-/// ```text
-/// on_start()  ← called once, after the GPU is ready
-///   loop {
-///     on_update()   ← game logic, physics, input reads
-///     on_render()   ← issue draw calls
-///   }
-/// ```
-///
-/// # Example
+/// The associated type `Action` is your game's input action enum. The engine
+/// is generic over it — `GameContext` exposes a typed input API with zero
+/// overhead.
 ///
 /// ```rust,ignore
-/// use redixel::{Game, Context};
+/// #[derive(Clone, PartialEq, Eq, Hash)]
+/// enum MyAction { MoveUp, Fire }
 ///
 /// struct MyGame;
 ///
 /// impl Game for MyGame {
-///     fn on_start(&mut self, _ctx: &mut Context) {}
-///     fn on_update(&mut self, _ctx: &mut Context) {}
-///     fn on_render(&mut self, _ctx: &mut Context) {}
-/// }
+///     type Action = MyAction;
 ///
-/// fn main() {
-///     redixel::run(MyGame).unwrap();
+///     fn on_start(&mut self, ctx: &mut dyn GameContext<MyAction>) {
+///         ctx.input_mut().bind(MyAction::MoveUp, KeyCode::KeyW);
+///         ctx.input_mut().bind(MyAction::Fire,   KeyCode::Space);
+///     }
+///
+///     fn on_update(&mut self, ctx: &mut dyn GameContext<MyAction>) {
+///         if ctx.input().held(MyAction::MoveUp) { /* ... */ }
+///     }
+///
+///     fn on_render(&mut self, ctx: &mut dyn GameContext<MyAction>) {
+///         ctx.draw_rect(Vec2::new(0.0, 0.0), Vec2::new(50.0, 50.0), Color::WHITE);
+///     }
 /// }
 /// ```
 pub trait Game: 'static {
-    /// Called once, immediately after the GPU context is ready.
-    fn on_start(&mut self, ctx: &mut dyn GameContext);
+    /// The action enum that maps to keybinds for this game.
+    ///
+    /// Use `type Action = ()` if you don't need input.
+    type Action: InputAction;
 
-    /// Called every frame before rendering.
-    fn on_update(&mut self, ctx: &mut dyn GameContext);
+    /// Called once after the GPU context is ready. Bind keys and load assets here.
+    fn on_start(&mut self, ctx: &mut dyn GameContext<Self::Action>);
 
-    /// Called every frame after `on_update`.
-    fn on_render(&mut self, ctx: &mut dyn GameContext);
+    /// Called every frame before rendering. Update game state here.
+    fn on_update(&mut self, ctx: &mut dyn GameContext<Self::Action>);
+
+    /// Called every frame after `on_update`. Issue draw calls here.
+    fn on_render(&mut self, ctx: &mut dyn GameContext<Self::Action>);
 }
 
-/// The interface through which `Game` methods interact with the engine.
+/// The interface through which [`Game`] methods talk to the engine each frame.
 ///
-/// Defined as a trait so that `redixel-core` stays free of any dependency on
-/// `redixel-runtime`. The concrete implementation lives in `redixel-runtime`
-/// and is passed as `&mut dyn GameContext` to keep the boundary clean.
-pub trait GameContext {
-    /// Signals the engine to shut down cleanly after the current frame.
+/// Generic over `A: InputAction` so that `input()` returns a typed view
+/// without any dynamic dispatch or downcasting.
+pub trait GameContext<A: InputAction> {
+    /// Requests a clean engine shutdown after the current frame.
     fn exit(&mut self);
 
-    /// Returns `true` if [`exit`] has been called this frame.
+    /// Returns `true` if [`exit`] was called this frame.
     fn should_exit(&self) -> bool;
 
-    /// Returns the time in seconds between the last two frames (delta time).
+    /// Seconds elapsed between the two most recent frames (delta time).
     fn delta_time(&self) -> f64;
 
-    /// Returns the current FPS measurement.
+    /// Current FPS measurement.
     fn fps(&self) -> f64;
 
-    /// Returns the current dimensions of the rendering surface.
+    /// Width of the rendering surface in pixels.
+    fn surface_width(&self) -> u32;
+
+    /// Height of the rendering surface in pixels.
+    fn surface_height(&self) -> u32;
+
+    /// Returns a read-only view of the current input state.
     ///
-    /// The tuple contains `(width, height)` in pixels. This value updates automatically
-    /// whenever the window is resized, making it essential for responsive rendering,
-    /// UI alignment, and camera calculations.
-    fn screen_size(&self) -> (f32, f32);
+    /// Use this to query `just_pressed`, `held`, and `just_released`.
+    fn input(&self) -> &dyn InputQuery<A>;
+
+    /// Returns a mutable handle to bind actions to keys.
+    ///
+    /// Call this in `on_start` to register your keybinds.
+    fn input_mut(&mut self) -> &mut dyn InputBind<A>;
 
     /// Sets the background clear colour for this frame.
     fn clear_color(&mut self, color: Color);
-
-    /// Draws a filled, axis-aligned rectangle.
-    ///
-    /// - `position` — top-left corner in world coordinates
-    /// - `size`     — width and height in world units
-    /// - `color`    — fill colour
-    fn draw_rect(&mut self, position: Vec2, size: Vec2, color: Color);
 
     /// Draws a filled triangle.
     ///
@@ -84,6 +92,50 @@ pub trait GameContext {
     /// - `color`          — fill colour
     fn draw_triangle(&mut self, p1: Vec2, p2: Vec2, p3: Vec2, color: Color);
 
-    /// Returns the error that caused the engine to stop, if any.
+    /// Draws a filled, axis-aligned rectangle.
+    ///
+    /// - `position` — top-left corner in world/screen coordinates (y-down)
+    /// - `size`     — width × height in pixels
+    /// - `color`    — fill colour
+    fn draw_rect(&mut self, position: Vec2, size: Vec2, color: Color);
+
+    /// Extracts any pending engine error out of the context.
     fn take_error(&mut self) -> Option<RedixelError>;
+}
+
+/// Read-only input queries for the current frame.
+pub trait InputQuery<A: InputAction> {
+    /// Returns `true` on the exact frame the action's key went down.
+    fn just_pressed(&self, action: A) -> bool;
+
+    /// Returns `true` every frame the action's key is held down.
+    fn held(&self, action: A) -> bool;
+
+    /// Returns `true` on the exact frame the action's key came up.
+    fn just_released(&self, action: A) -> bool;
+
+    /// Returns `true` if the action is down in any capacity.
+    fn is_down(&self, action: A) -> bool {
+        self.just_pressed(action.clone()) || self.held(action)
+    }
+
+    /// Returns `true` if a raw `KeyCode` is currently held, bypassing bindings.
+    ///
+    /// Useful for debug keys or engine-level shortcuts.
+    fn key_held(&self, key: KeyCode) -> bool;
+
+    /// Returns `true` if a raw `KeyCode` was just pressed this frame.
+    fn key_just_pressed(&self, key: KeyCode) -> bool;
+}
+
+/// Mutable binding configuration — call only in `on_start`.
+pub trait InputBind<A: InputAction> {
+    /// Binds an action to a key. Multiple keys can share the same action.
+    fn bind(&mut self, action: A, key: KeyCode);
+
+    /// Removes all bindings for `action`.
+    fn unbind(&mut self, action: A);
+
+    /// Removes all bindings entirely.
+    fn clear_bindings(&mut self);
 }

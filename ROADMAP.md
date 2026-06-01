@@ -22,8 +22,9 @@
 - [ ] **Vertex Buffers:** Implement the logic to pass custom geometry (Vertices/Indices) from CPU to GPU.
 - [x] **Math Library:** Implement a custom Linear Algebra module (Vec2, Vec3, Mat4, Orthographic Projection).
 - [ ] **Shaders & Uniforms:** Pass global engine data (Time, Resolution, Camera View) to shaders via Uniform Buffers.
-- [ ] **Texture Support:** Implement raw image parsing (header reading) and texture upload to GPU.
 - [ ] **Camera System:** Implement World-to-Screen coordinate transformation.
+- [ ] **Render Targets / Framebuffers:** Create intermediate textures to allow offscreen rendering, Pixel-Perfect scaling, and Post-Processing.
+- [ ] **Texture Support:** Implement raw image parsing (header reading) and texture upload to GPU.
 
 ## **Phase 3 — The 2D Renderer (Batching)**
 
@@ -31,6 +32,8 @@
 
 - [ ] **Sprite Struct:** Define the data structure for visual objects (Pos, Size, Rotation, UVs).
 - [ ] **Batch Renderer:** Implement a dynamic Vertex Buffer that groups multiple sprites into a single draw call to minimize GPU overhead.
+- [ ] **Text & Font Renderer:** Integrate `ab_glyph` to generate font atlases and draw dynamic text via the Batch Renderer.
+- [ ] **Particle System:** Implement a lightweight data structure to process and render thousands of ephemeral quads efficiently.
 - [ ] **Z-Ordering:** Implement CPU-side depth sorting (Painter's Algorithm) or GPU-side depth buffering.
 - [ ] **Primitive Rendering:** Implement logic to draw debug shapes (lines, wireframe rectangles) for physics visualization.
 
@@ -39,6 +42,8 @@
 **Goal:** Decouple OS events from Game Logic.
 
 - [x] **Input Abstraction:** Create an "Action Mapping" system (bind "Jump" to "Space" or "A button").
+- [ ] **Gamepad Integration:** Integrate `gilrs` to support USB/Bluetooth controllers alongside keyboard mappings.
+- [ ] **Touchscreen Support:** Map touch events (especially for WASM/Mobile environments) seamlessly into the Input Manager.
 - [ ] **Coordinate Conversion:** Implement math to convert Screen Coordinates (Pixels) to World Coordinates (Game Units).
 - [x] **Input State Machine:** Track "Just Pressed," "Held," and "Just Released" states manually.
 
@@ -49,12 +54,15 @@
 - [ ] **Component Storage:** Implement a custom storage architecture (e.g., Sparse Sets or Archetypes) for high-performance data access.
 - [ ] **Entity Management:** ID generation and recycling logic.
 - [ ] **System Dispatcher:** Logic to iterate over components and run update loops.
+- [ ] **Transform Hierarchy:** Implement local/global matrix calculations to support Parent-Child entity relationships (e.g., a sword attached to a player's hand).
+- [ ] **Game State Management:** Create a robust State Machine to handle Scene transitions (Menu -> Gameplay -> Pause -> Game Over).
 
 ## **Phase 6 — Core Systems & Resources**
 
 **Goal:** Managing memory and assets efficiently.
 
 - [ ] **Asset Manager:** Implement a caching system to load resources once and reference them by ID/Handle.
+- [ ] **Async Asset Loading:** Implement non-blocking resource fetching (Promises/Futures) to prevent WASM thread freezing during heavy I/O.
 - [ ] **Scene Management:** Define a custom file format for saving/loading level data.
 - [ ] **Audio Engine:** Implement a basic audio mixer (handling buffers and mixing raw PCM data).
 
@@ -64,6 +72,7 @@
 
 - [ ] **AABB Collision:** Implement Axis-Aligned Bounding Box intersection math.
 - [ ] **Collision Resolution:** Implement separating axis logic to prevent object overlap.
+- [ ] **Raycasting & Triggers:** Implement Line-of-Sight checks and ghost/sensor collisions without physical resolution.
 - [ ] **Spatial Partitioning:** Implement a Quadtree or Grid to optimize collision checks.
 
 ## **Phase 8 — Developer Tools (UI)**
@@ -71,4 +80,5 @@
 **Goal:** Runtime inspection and debugging.
 
 - [ ] **Debug UI:** Implement a simple immediate-mode text/button renderer for changing variables at runtime.
+- [ ] **Hot-Reloading:** Enable updating of Textures, Shaders, and configs on-the-fly without restarting the engine.
 - [ ] **Profiler:** Implement internal timers to measure function execution speed and memory usage.

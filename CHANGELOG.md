@@ -62,6 +62,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **`WindowManager`**: Ensures precise FPS title formatting and correct event filtering logic for window-specific events (e.g., Focus, Scaling).
 - **Continuous Integration (CI) Enhancements:**
   - Integrated essential Linux graphics dependencies (`xvfb` and `mesa-vulkan-drivers`) to enable integration testing of graphics-dependent code via CPU-emulated Vulkan.
+- **Math Library (`redixel-math`)**:
+  - Implemented core linear algebra structures: `Vec2`, `Mat4`, and `Color`.
+  - Added logic for orthographic projections, matrix multiplication (column-major for GPU), vector normalization, and lerping.
+- **Type-Safe Input System**:
+  - Upgraded `InputManager` with a generic, zero-overhead `InputAction` trait.
+  - Implemented strict state machine tracking (`JustPressed`, `Held`, `JustReleased`).
+  - Added OS-level key repeat filtering and decoupled read/write access via `InputQuery` and `InputBind` traits.
+- **Game API & Context (`redixel-core`)**:
+  - Introduced the main `Game` trait (`on_start`, `on_update`, `on_render`).
+  - Implemented `GameContext` to expose a safe, unified interface to the user without exposing internal dependencies.
+  - Created the `DrawCommand` queue to buffer rendering primitives (`ClearColor`, `Rect`, `Triangle`) with intelligent deduplication logic.
+- **Engine Prelude**:
+  - Added `redixel::prelude::*` to drastically improve Developer Experience (DX) and streamline imports for game developers.
 
 ### Changed
 
@@ -77,3 +90,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Pure Rust WebAssembly:** Eliminated external `index.html` and JavaScript bindings setup. The engine now dynamically injects the `<canvas>` into the DOM and enforces styling purely via Rust (`web-sys`).
 - Updated `winit` Web API integration to safely build `WindowAttributesWeb` without relying on deprecated trait extensions.
 - Removed dead code (e.g., `SetLoggerError` from engine error variants) to ensure the framework remains unopinionated about the consumer's logging setup.
+- **Internal API Encapsulation**: Refactored internal crates (`redixel-runtime`, `redixel-platform`) to use private modules and surgical `pub use` exports, preventing namespace pollution and protecting internal structures.
+- **Event Loop Cascading**: Streamlined the main event loop using the _Chain of Responsibility_ pattern, safely delegating OS events between the `Context` and `WindowManager`.

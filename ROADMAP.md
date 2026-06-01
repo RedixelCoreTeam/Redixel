@@ -9,9 +9,9 @@
 - [x] **Renderer Module:** Initialized the `wgpu` context (Instance, Surface, Device) and established the basic Clear Color render pass.
 - [x] **Error Handling:** Unified system (`RedixelError`) and graceful propagation (Main/WASM).
 - [x] **Time Management:** Delta Time calculation and FPS Counter.
-- [ ] **Game Loop & User API:** Implement `Game` trait (`on_update`, `on_render`) and `Context`.
-- [ ] **Basic Input & Window Control:** Handle Exit (ESC/Close), Fullscreen toggle, and Cleanup.
-- [ ] **Logging:** Standardize logs across the engine (`log` crate).
+- [x] **Game Loop & User API:** Implement `Game` trait (`on_update`, `on_render`) and `Context`.
+- [x] **Basic Input & Window Control:** Handle Exit (ESC/Close), Fullscreen toggle, and Cleanup.
+- [x] **Logging:** Standardize logs across the engine (`log` crate).
 - [x] **Testing Infrastructure:** Establish unit testing patterns and ensure core logic (Time, Config) is covered by `cargo test`.
 - [x] **Engine Configuration:** Startup settings struct (Window title, Resolution, VSync, Backend).
 
@@ -20,7 +20,7 @@
 **Goal:** Move from "Hardcoded Triangle" to a usable, data-driven Rendering API.
 
 - [ ] **Vertex Buffers:** Implement the logic to pass custom geometry (Vertices/Indices) from CPU to GPU.
-- [ ] **Math Library:** Implement a custom Linear Algebra module (Vec2, Vec3, Mat4, Orthographic Projection).
+- [x] **Math Library:** Implement a custom Linear Algebra module (Vec2, Vec3, Mat4, Orthographic Projection).
 - [ ] **Shaders & Uniforms:** Pass global engine data (Time, Resolution, Camera View) to shaders via Uniform Buffers.
 - [ ] **Texture Support:** Implement raw image parsing (header reading) and texture upload to GPU.
 - [ ] **Camera System:** Implement World-to-Screen coordinate transformation.
@@ -38,9 +38,9 @@
 
 **Goal:** Decouple OS events from Game Logic.
 
-- [ ] **Input Abstraction:** Create an "Action Mapping" system (bind "Jump" to "Space" or "A button").
+- [x] **Input Abstraction:** Create an "Action Mapping" system (bind "Jump" to "Space" or "A button").
 - [ ] **Coordinate Conversion:** Implement math to convert Screen Coordinates (Pixels) to World Coordinates (Game Units).
-- [ ] **Input State Machine:** Track "Just Pressed," "Held," and "Just Released" states manually.
+- [x] **Input State Machine:** Track "Just Pressed," "Held," and "Just Released" states manually.
 
 ## **Phase 5 — ECS (Entity Component System)**
 

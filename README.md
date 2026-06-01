@@ -17,28 +17,46 @@ Redixel is built on top of the modern Rust ecosystem, prioritizing safety and cr
 
 ## Architecture
 
-The engine adheres to a strict **Layered Architecture**. Dependencies flow downwards; circular dependencies between layers are strictly forbidden to ensure modularity.
+The engine adheres to a strict **Layered Architecture** divided into isolated crates within a Cargo Workspace. Dependencies flow downwards; circular dependencies between crates are strictly forbidden to ensure modularity.
 
-### 1\. Runtime Layer (`runtime.rs`)
+### 1\. Public API Facade (`redixel`)
+
+The outermost layer. It re-exports the essential types and traits from the internal crates via a unified `prelude`, providing a clean and ergonomic interface for the end-user.
+
+### 2\. Runtime Layer (`redixel-runtime`)
 
 The "Brain" of the engine. It implements the `winit::ApplicationHandler` trait.
 
-- **Responsibility:** Orchestrates the entire application lifecycle (Initialization, Update Loop, Render Loop, Shutdown).
-- **Behavior:** Owns the sub-systems and manages the flow of data between the Platform and Graphics layers.
+- **Responsibility:** Orchestrates the application lifecycle (Initialization, Update Loop, Render Loop, Shutdown) and manages the `TimeManager`.
+- **Behavior:** Owns the sub-systems and safely routes OS events to the platform and graphics modules.
 
-### 2\. Platform Layer (`platform/`)
-
-Abstracts Operating System specifics, ensuring the core engine remains platform-agnostic.
-
-- **Window Manager:** Handles window creation, lifecycle events, DPI scaling, and safe suspension/resumption.
-- **Input Manager:** Decouples raw Winit events from game logic, sanitizing input data.
-
-### 3\. Graphics Layer (`graphics/`)
+### 3\. Graphics Layer (`redixel-renderer`)
 
 Abstracts the GPU hardware via WGPU.
 
 - **Renderer:** Encapsulates the WGPU Instance, Surface, Device, Queue, and Render Pipeline.
-- **Capability:** Manages the swapchain, render passes, and command encoding.
+- **Capability:** Manages the swapchain, render passes, clear colors, and command encoding.
+
+### 4\. Platform Layer (`redixel-platform`)
+
+Abstracts Operating System specifics, ensuring the core engine remains platform-agnostic.
+
+- **Window Manager:** Handles window creation, lifecycle events, and safe suspension/resumption natively and on WebAssembly.
+- **Input Manager:** Decouples raw OS input events from game logic, sanitizing key states and pointer data.
+
+### 5\. Core Layer (`redixel-core`)
+
+The structural foundation of the engine framework.
+
+- **Responsibility:** Defines the main lifecycles (`Game` trait), the shared execution context (`GameContext`), the primitive rendering command queues, and the centralized error system (`RedixelError`).
+- **Dependencies:** Relies on `redixel-math` for type definitions, but remains completely agnostic of runtime, windowing, or graphics implementations.
+
+### 6\. Mathematics Layer (`redixel-math`)
+
+The absolute bedrock utility crate of the entire workspace.
+
+- **Responsibility:** Implements pure, zero-dependency linear algebra operations, including vectors (`Vec2`), transformation matrices (`Mat4`), projection calculations, and color representations (`Color`).
+- **Behavior:** Completely isolated from engine systems and game logic, ensuring optimal compilation times and maximum portability.
 
 ## Directory Structure
 

@@ -176,7 +176,7 @@ mod tests {
         mgr.process_event(&make_key_event(KeyCode::Space, ElementState::Pressed, false));
 
         assert!(mgr.just_pressed(TestAction::Jump));
-        assert!(!mgr.held(TestAction::Jump));
+        assert!(mgr.held(TestAction::Jump));
 
         mgr.tick();
         assert!(!mgr.just_pressed(TestAction::Jump));

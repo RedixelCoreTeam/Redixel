@@ -47,12 +47,15 @@ redixel/
 ├── Cargo.toml                  # Workspace Root Configuration
 ├── crates/
 │   ├── redixel-core/           # Base types, errors, no heavy dependencies
+│   ├── redixel-math/           # Linear algebra (Vec2, Mat4, Color)
 │   ├── redixel-platform/       # Winit: window, input, web-sys DOM injection
 │   ├── redixel-renderer/       # Wgpu: GPU device, render pass, commands
 │   ├── redixel-runtime/        # Loop, AppState, TimeManager, Settings
 │   └── redixel/                # Public facade API (pub use ...)
 └── examples/
-    └── hello_triangle/         # End-user application example
+    ├── pong/                   # Classic 2D game demonstrating input and physics
+    ├── triangle/               # Basic 2D rendering example
+    └── triangle_3d/            # Basic 3D rendering and camera example
 ```
 
 ## Getting Started
@@ -60,15 +63,16 @@ redixel/
 ### Prerequisites
 
 - Rust Toolchain (Stable)
-- Python 3 (Optional, for hosting the Web build)
 
 ### Running Native (Windows/Linux/macOS)
 
-To run the engine on your local machine:
+To run the engine and the included Pong game natively on your local machine:
 
 ```sh
-cargo run
+cargo run --release --bin pong
 ```
+
+> **Note:** The `--release` flag compiles the engine with maximum optimizations, which is highly recommended to ensure stable framerates. For faster compilation times during development, you can omit this flag.
 
 ### Running on Web (WASM)
 
@@ -116,7 +120,7 @@ chromium \
 
 ## Testing
 
-The Redixel test suite is focused on validating the pure CPU logic (e.g., input handling, runtime state, and time calculation).
+The Redixel test suite is focused on validating the pure CPU logic (e.g., input handling, runtime state, math vectors, and time calculation).
 
 ### Running Unit Tests
 
@@ -128,7 +132,7 @@ cargo test
 
 ## Roadmap
 
-The project is currently in **Phase 1 (Foundation & Lifecycle)**.
+The project is currently transitioning to Phase 2 (The Graphics Core).
 For a detailed breakdown of upcoming features, including Batch Rendering, ECS, and Physics, please refer to the [ROADMAP](./ROADMAP.md).
 
 ## Contributing
@@ -141,4 +145,4 @@ Redixel is distributed under the terms of the Apache License (Version 2.0).
 
 See [LICENSE](./LICENSE) for details.
 
-Copyright 2025 Redixel Core Team.
+Copyright 2026 Redixel Core Team.

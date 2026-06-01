@@ -1,7 +1,8 @@
 pub mod batch;
-mod device;
+pub mod device;
 pub mod pipeline;
 pub mod renderer;
 
-pub use renderer::Renderer;
-pub use renderer::RendererConfig;
+pub use batch::SpriteBatch;
+pub use pipeline::{CameraUniform, ShapePipeline, Vertex};
+pub use renderer::{DrawQueue, Renderer, RendererConfig};

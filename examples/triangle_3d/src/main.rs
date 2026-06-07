@@ -4,6 +4,25 @@ struct Triangle3d {
     rotation: f32,
 }
 
+impl Triangle3d {
+    fn rotate(x: f32, y: f32, z: f32, angle: f32) -> (f32, f32, f32) {
+        let rx: f32 = x * angle.cos() - z * angle.sin();
+        let rz: f32 = x * angle.sin() + z * angle.cos();
+
+        let tilt: f32 = 0.4;
+        let ry: f32 = y * tilt.cos() - rz * tilt.sin();
+        let rz_final: f32 = y * tilt.sin() + rz * tilt.cos();
+
+        (rx, ry, rz_final)
+    }
+
+    fn project(x: f32, y: f32, z: f32, center_x: f32, center_y: f32, scale: f32) -> Vec2 {
+        let distance: f32 = 2.5;
+        let z_perspective: f32 = distance + z;
+        Vec2::new(center_x + (x / z_perspective) * scale, center_y + (y / z_perspective) * scale)
+    }
+}
+
 impl Game for Triangle3d {
     type Action = ();
 
@@ -13,6 +32,7 @@ impl Game for Triangle3d {
 
     fn on_update(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
         self.rotation += (ctx.delta_time() as f32) * 1.5;
+        self.rotation %= std::f32::consts::TAU;
     }
 
     fn on_render(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
@@ -33,20 +53,9 @@ impl Game for Triangle3d {
             (1, 3, 2, Color::rgb(0.8, 0.8, 0.1)),
         ];
 
-        let rotate = |x: f32, y: f32, z: f32, angle: f32| -> (f32, f32, f32) {
-            let rx: f32 = x * angle.cos() - z * angle.sin();
-            let rz: f32 = x * angle.sin() + z * angle.cos();
-
-            let tilt: f32 = 0.4;
-            let ry: f32 = y * tilt.cos() - rz * tilt.sin();
-            let rz_final: f32 = y * tilt.sin() + rz * tilt.cos();
-
-            (rx, ry, rz_final)
-        };
-
         let rotated_vertices: Vec<(f32, f32, f32)> = vertices
             .iter()
-            .map(|v: &(f32, f32, f32)| rotate(v.0, v.1, v.2, self.rotation))
+            .map(|v: &(f32, f32, f32)| Self::rotate(v.0, v.1, v.2, self.rotation))
             .collect();
 
         let mut faces_to_draw = Vec::new();
@@ -55,7 +64,6 @@ impl Game for Triangle3d {
             let v1: (f32, f32, f32) = rotated_vertices[*i1];
             let v2: (f32, f32, f32) = rotated_vertices[*i2];
             let v3: (f32, f32, f32) = rotated_vertices[*i3];
-
             let avg_z: f32 = (v1.2 + v2.2 + v3.2) / 3.0;
             faces_to_draw.push((avg_z, v1, v2, v3, *color));
         }
@@ -63,17 +71,9 @@ impl Game for Triangle3d {
         faces_to_draw.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
 
         for (_, v1, v2, v3, color) in faces_to_draw {
-            let project = |x: f32, y: f32, z: f32| -> Vec2 {
-                let distance: f32 = 2.5;
-                let z_perspective: f32 = distance + z;
-
-                Vec2::new(center_x + (x / z_perspective) * scale, center_y + (y / z_perspective) * scale)
-            };
-
-            let p1: Vec2 = project(v1.0, v1.1, v1.2);
-            let p2: Vec2 = project(v2.0, v2.1, v2.2);
-            let p3: Vec2 = project(v3.0, v3.1, v3.2);
-
+            let p1: Vec2 = Self::project(v1.0, v1.1, v1.2, center_x, center_y, scale);
+            let p2: Vec2 = Self::project(v2.0, v2.1, v2.2, center_x, center_y, scale);
+            let p3: Vec2 = Self::project(v3.0, v3.1, v3.2, center_x, center_y, scale);
             ctx.draw_triangle(p1, p2, p3, color);
         }
     }

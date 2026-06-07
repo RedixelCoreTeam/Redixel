@@ -9,6 +9,7 @@ repository.workspace = true
 
 [dependencies]
 redixel-core = { workspace = true }
+redixel-math = { workspace = true }
 log = { workspace = true }
 winit = { workspace = true }
 

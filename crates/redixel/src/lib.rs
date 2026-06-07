@@ -7,7 +7,7 @@ use winit::event_loop::{ControlFlow, EventLoop};
 use winit::event_loop::run_on_demand::EventLoopExtRunOnDemand;
 
 pub mod prelude {
-    pub use redixel_core::{Game, GameContext, KeyCode, KeyState};
+    pub use redixel_core::{Game, GameContext, InputSource, KeyCode, KeyState, MouseButton};
     pub use redixel_math::{Color, Mat4, Vec2};
 }
 

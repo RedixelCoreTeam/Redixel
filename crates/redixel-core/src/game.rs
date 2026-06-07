@@ -1,9 +1,6 @@
-use redixel_math::Color;
-use redixel_math::Vec2;
+use crate::{InputAction, InputSource, KeyCode, MouseButton, RedixelError};
 
-use crate::RedixelError;
-use crate::input::InputAction;
-use crate::input::KeyCode;
+use redixel_math::{Color, Vec2};
 
 /// The entry point for user game logic.
 ///
@@ -13,7 +10,7 @@ use crate::input::KeyCode;
 ///
 /// ```rust,ignore
 /// #[derive(Clone, PartialEq, Eq, Hash)]
-/// enum MyAction { MoveUp, Fire }
+/// enum MyAction { MoveUp, Shoot }
 ///
 /// struct MyGame;
 ///
@@ -21,12 +18,19 @@ use crate::input::KeyCode;
 ///     type Action = MyAction;
 ///
 ///     fn on_start(&mut self, ctx: &mut dyn GameContext<MyAction>) {
-///         ctx.input_mut().bind(MyAction::MoveUp, KeyCode::KeyW);
-///         ctx.input_mut().bind(MyAction::Fire,   KeyCode::Space);
+///         // Bind keys and mouse buttons using `.into()`
+///         ctx.input_mut().bind(MyAction::MoveUp, KeyCode::KeyW.into());
+///         ctx.input_mut().bind(MyAction::Shoot, MouseButton::Left.into());
 ///     }
 ///
 ///     fn on_update(&mut self, ctx: &mut dyn GameContext<MyAction>) {
 ///         if ctx.input().held(MyAction::MoveUp) { /* ... */ }
+///         
+///         if ctx.input().just_pressed(MyAction::Shoot) {
+///             if let Some(pos) = ctx.input().mouse_position() {
+///                 // Shoot towards mouse position
+///             }
+///         }
 ///     }
 ///
 ///     fn on_render(&mut self, ctx: &mut dyn GameContext<MyAction>) {
@@ -35,7 +39,7 @@ use crate::input::KeyCode;
 /// }
 /// ```
 pub trait Game: 'static {
-    /// The action enum that maps to keybinds for this game.
+    /// The action enum that maps to keybinds/mouse for this game.
     ///
     /// Use `type Action = ()` if you don't need input.
     type Action: InputAction;
@@ -75,12 +79,12 @@ pub trait GameContext<A: InputAction> {
 
     /// Returns a read-only view of the current input state.
     ///
-    /// Use this to query `just_pressed`, `held`, and `just_released`.
+    /// Use this to query actions, raw keys, and mouse state.
     fn input(&self) -> &dyn InputQuery<A>;
 
-    /// Returns a mutable handle to bind actions to keys.
+    /// Returns a mutable handle to bind actions to input sources.
     ///
-    /// Call this in `on_start` to register your keybinds.
+    /// Call this in `on_start` to register your input bindings.
     fn input_mut(&mut self) -> &mut dyn InputBind<A>;
 
     /// Sets the background clear colour for this frame.
@@ -105,13 +109,13 @@ pub trait GameContext<A: InputAction> {
 
 /// Read-only input queries for the current frame.
 pub trait InputQuery<A: InputAction> {
-    /// Returns `true` on the exact frame the action's key went down.
+    /// Returns `true` on the exact frame the action's bound input went down.
     fn just_pressed(&self, action: A) -> bool;
 
-    /// Returns `true` every frame the action's key is held down.
+    /// Returns `true` every frame the action's bound input is held down.
     fn held(&self, action: A) -> bool;
 
-    /// Returns `true` on the exact frame the action's key came up.
+    /// Returns `true` on the exact frame the action's bound input came up.
     fn just_released(&self, action: A) -> bool;
 
     /// Returns `true` if the action is down in any capacity.
@@ -120,18 +124,38 @@ pub trait InputQuery<A: InputAction> {
     }
 
     /// Returns `true` if a raw `KeyCode` is currently held, bypassing bindings.
-    ///
     /// Useful for debug keys or engine-level shortcuts.
     fn key_held(&self, key: KeyCode) -> bool;
 
     /// Returns `true` if a raw `KeyCode` was just pressed this frame.
     fn key_just_pressed(&self, key: KeyCode) -> bool;
+
+    /// Returns `true` if a raw `KeyCode` was just released this frame.
+    fn key_just_released(&self, key: KeyCode) -> bool;
+
+    /// Returns `true` if a raw `MouseButton` is currently held, bypassing bindings.
+    fn mouse_held(&self, button: MouseButton) -> bool;
+
+    /// Returns `true` if a raw `MouseButton` was just pressed this frame.
+    fn mouse_just_pressed(&self, button: MouseButton) -> bool;
+
+    /// Returns `true` if a raw `MouseButton` was just released this frame.
+    fn mouse_just_released(&self, button: MouseButton) -> bool;
+
+    /// Returns the current cursor position in surface pixels.
+    /// Returns `None` if the cursor is outside the window.
+    fn mouse_position(&self) -> Option<Vec2>;
+
+    /// Returns the accumulated mouse scroll delta for the current frame.
+    /// `x` represents horizontal scrolling, `y` represents vertical.
+    fn scroll_delta(&self) -> Vec2;
 }
 
 /// Mutable binding configuration — call only in `on_start`.
 pub trait InputBind<A: InputAction> {
-    /// Binds an action to a key. Multiple keys can share the same action.
-    fn bind(&mut self, action: A, key: KeyCode);
+    /// Binds an action to a source (Keyboard Key or Mouse Button).
+    /// Multiple sources can share the same action.
+    fn bind(&mut self, action: A, source: InputSource);
 
     /// Removes all bindings for `action`.
     fn unbind(&mut self, action: A);

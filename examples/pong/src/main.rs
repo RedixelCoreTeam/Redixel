@@ -6,26 +6,35 @@ const PADDLE_SPEED: f32 = 400.0;
 const PADDLE_MARGIN: f32 = 20.0;
 const BALL_SIZE: f32 = 14.0;
 const BALL_SPEED: f32 = 450.0;
+const SCROLL_IMPULSE: f32 = 250.0;
+const SCROLL_FRICTION: f32 = 25.0;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Action {
     P1Up,
     P1Down,
     Exit,
+    ToggleInput,
 }
 
 struct Paddle {
     pos: Vec2,
+    vel_y: f32,
 }
 
 impl Paddle {
     fn new() -> Self {
         Self {
             pos: Vec2::new(0.0, 0.0),
+            vel_y: 0.0,
         }
     }
 
     fn clamp(&mut self, h: f32) {
+        if self.pos.y <= 0.0 || self.pos.y >= h - PADDLE_H {
+            self.vel_y = 0.0;
+        }
+
         self.pos.y = self.pos.y.clamp(0.0, h - PADDLE_H);
     }
 }
@@ -55,6 +64,7 @@ struct Pong {
     ball: Ball,
     score: (u32, u32),
     initialized: bool,
+    use_mouse_scroll: bool,
 }
 
 impl Pong {
@@ -65,11 +75,13 @@ impl Pong {
             ball: Ball::new(),
             score: (0, 0),
             initialized: false,
+            use_mouse_scroll: false,
         }
     }
 
     fn init_layout(&mut self, w: f32, h: f32) {
         self.left.pos = Vec2::new(PADDLE_MARGIN, h / 2.0 - PADDLE_H / 2.0);
+        self.left.vel_y = 0.0;
         self.right.pos = Vec2::new(w - PADDLE_MARGIN - PADDLE_W, h / 2.0 - PADDLE_H / 2.0);
         self.ball.reset(1.0, w, h);
         self.initialized = true;
@@ -132,12 +144,13 @@ impl Game for Pong {
     type Action = Action;
 
     fn on_start(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
-        ctx.input_mut().bind(Action::P1Up, KeyCode::KeyW);
-        ctx.input_mut().bind(Action::P1Up, KeyCode::ArrowUp);
-        ctx.input_mut().bind(Action::P1Down, KeyCode::KeyS);
-        ctx.input_mut().bind(Action::P1Down, KeyCode::ArrowDown);
-        ctx.input_mut().bind(Action::Exit, KeyCode::Escape);
-        log::info!("W/S or ArrowUp/ArrowDown to move. ESC to quit.");
+        ctx.input_mut().bind(Action::P1Up, KeyCode::KeyW.into());
+        ctx.input_mut().bind(Action::P1Up, KeyCode::ArrowUp.into());
+        ctx.input_mut().bind(Action::P1Down, KeyCode::KeyS.into());
+        ctx.input_mut().bind(Action::P1Down, KeyCode::ArrowDown.into());
+        ctx.input_mut().bind(Action::ToggleInput, KeyCode::KeyM.into());
+        ctx.input_mut().bind(Action::Exit, KeyCode::Escape.into());
+        log::info!("W/S or Arrows to move. 'M' to toggle Mouse Scroll. ESC to quit.");
     }
 
     fn on_update(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
@@ -151,12 +164,34 @@ impl Game for Pong {
 
         self.right.pos.x = w - PADDLE_MARGIN - PADDLE_W;
 
-        if ctx.input().held(Action::P1Up) {
-            self.left.pos.y -= PADDLE_SPEED * dt;
+        if ctx.input().just_pressed(Action::ToggleInput) {
+            self.use_mouse_scroll = !self.use_mouse_scroll;
+            log::info!("Control Mode: {}", if self.use_mouse_scroll { "SCROLL" } else { "KEYBOARD" });
         }
 
-        if ctx.input().held(Action::P1Down) {
-            self.left.pos.y += PADDLE_SPEED * dt;
+        if self.use_mouse_scroll {
+            let scroll_y: f32 = ctx.input().scroll_delta().y;
+
+            if scroll_y != 0.0 {
+                self.left.vel_y -= scroll_y * SCROLL_IMPULSE;
+            }
+
+            self.left.pos.y += self.left.vel_y * dt;
+            self.left.vel_y -= self.left.vel_y * SCROLL_FRICTION * dt;
+
+            if self.left.vel_y.abs() < 1.0 {
+                self.left.vel_y = 0.0;
+            }
+        } else {
+            self.left.vel_y = 0.0;
+
+            if ctx.input().held(Action::P1Up) {
+                self.left.pos.y -= PADDLE_SPEED * dt;
+            }
+
+            if ctx.input().held(Action::P1Down) {
+                self.left.pos.y += PADDLE_SPEED * dt;
+            }
         }
 
         if ctx.input().held(Action::Exit) {
@@ -182,6 +217,7 @@ impl Game for Pong {
                 Vec2::new(4.0, 10.0),
                 Color::from_rgba8(70, 70, 70, 255),
             );
+
             y += 18.0;
         }
 

@@ -82,3 +82,13 @@
 - [ ] **Debug UI:** Implement a simple immediate-mode text/button renderer for changing variables at runtime.
 - [ ] **Hot-Reloading:** Enable updating of Textures, Shaders, and configs on-the-fly without restarting the engine.
 - [ ] **Profiler:** Implement internal timers to measure function execution speed and memory usage.
+
+## **Phase 9 — Networking (Multiplayer)**
+
+**Goal:** Enable real-time multiplayer with a simple, data-driven API, supporting both Desktop and Web (WASM).
+
+- [ ] **Transport Layer:** Implement an agnostic network layer. Use UDP (via a crate like `renet` or `laminar`) for fast native desktop networking, and WebRTC for WASM/Browser compatibility.
+- [ ] **Headless Mode:** Modify the `Runtime` to allow the engine to initialize without `winit` or `wgpu`. This allows the exact same game code to be compiled and run on a Linux VPS as an authoritative Dedicated Server.
+- [ ] **Fixed Update Loop:** Implement a fixed-timestep loop (`on_fixed_update`) in the `Runtime` to ensure physics and network ticks are deterministic and isolated from visual framerate fluctuations.
+- [ ] **Network API:** Expose `ctx.network()` via the `GameContext` to allow users to easily poll connection events (Connect/Disconnect) and send byte payloads using Reliable or Unreliable channels.
+- [ ] **State Serialization:** Provide basic utility traits or integrate `serde` to help developers easily compress and serialize ECS components for network transmission.

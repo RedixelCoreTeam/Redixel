@@ -1,33 +1,27 @@
-use std::sync::Arc;
-use std::sync::RwLockReadGuard;
-use std::sync::mpsc;
-use std::sync::mpsc::Receiver;
-use std::sync::mpsc::Sender;
+use std::sync::{
+    Arc, RwLockReadGuard, mpsc,
+    mpsc::{Receiver, Sender},
+};
 
-use winit::application::ApplicationHandler;
-use winit::dpi::PhysicalSize;
-use winit::event::WindowEvent;
-use winit::event_loop::ActiveEventLoop;
-use winit::event_loop::EventLoopProxy;
-use winit::window::Window;
-use winit::window::WindowId;
+use winit::{
+    application::ApplicationHandler,
+    dpi::PhysicalSize,
+    event::WindowEvent,
+    event_loop::{ActiveEventLoop, EventLoopProxy},
+    window::{Window, WindowId},
+};
 
 use wgpu::SurfaceError;
 
-use redixel_core::Game;
-use redixel_core::RedixelError;
-use redixel_core::game::GameContext;
-use redixel_platform::WindowManager;
-use redixel_platform::window::WindowConfig;
-use redixel_renderer::Renderer;
-use redixel_renderer::RendererConfig;
+use redixel_core::{Game, RedixelError, game::GameContext};
+use redixel_platform::{WindowManager, window::WindowConfig};
+use redixel_renderer::{Renderer, RendererConfig};
 
-use crate::context::Context;
-use crate::context::DrawCommand;
-use crate::settings::EngineSettings;
-use crate::settings::RawBackend;
-use crate::settings::RawPresentMode;
-use crate::time::TimeManager;
+use crate::{
+    context::{Context, DrawCommand},
+    settings::{EngineSettings, RawBackend, RawPresentMode},
+    time::TimeManager,
+};
 
 type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
 
@@ -276,10 +270,11 @@ impl<G: Game> ApplicationHandler for Runtime<G> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use mpsc::TryRecvError;
+
     use redixel_core::GameContext;
-    use redixel_math::Color;
-    use redixel_math::Vec2;
+    use redixel_math::{Color, Vec2};
 
     struct Dummy;
     impl Game for Dummy {

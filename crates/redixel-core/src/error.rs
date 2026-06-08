@@ -1,12 +1,6 @@
 use thiserror::Error;
-
-use wgpu::CreateSurfaceError;
-use wgpu::RequestAdapterError;
-use wgpu::RequestDeviceError;
-use wgpu::SurfaceError;
-
-use winit::error::EventLoopError;
-use winit::error::RequestError;
+use wgpu::{CreateSurfaceError, RequestAdapterError, RequestDeviceError, SurfaceError};
+use winit::error::{EventLoopError, RequestError};
 
 #[cfg(target_os = "windows")]
 use wgpu::rwh::HandleError;

@@ -1,10 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
-use winit::event::{ElementState, MouseScrollDelta, WindowEvent};
-use winit::keyboard::PhysicalKey;
+use winit::{
+    event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent},
+    keyboard::{KeyCode, PhysicalKey},
+};
 
-use redixel_core::game::{InputBind, InputQuery};
-use redixel_core::input::{InputAction, InputSource, KeyCode, KeyState, MouseButton};
+use redixel_core::{
+    game::{InputBind, InputQuery},
+    input::{InputAction, InputSource, KeyState},
+};
 use redixel_math::Vec2;
 
 /// Owns all input state for the current frame and the action→source bindings.
@@ -265,10 +269,10 @@ mod tests {
     }
 
     fn key_event(code: KeyCode, state: ElementState, repeat: bool) -> WindowEvent {
-        use winit::event::KeyEvent;
-        use winit::keyboard::Key;
-        use winit::keyboard::KeyLocation;
-        use winit::keyboard::NativeKey;
+        use winit::{
+            event::KeyEvent,
+            keyboard::{Key, KeyLocation, NativeKey},
+        };
 
         WindowEvent::KeyboardInput {
             device_id: None,

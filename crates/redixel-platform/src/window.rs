@@ -1,16 +1,19 @@
 use std::sync::Arc;
 
-#[cfg(not(target_arch = "wasm32"))]
-use winit::dpi::LogicalSize;
-use winit::dpi::PhysicalSize;
-use winit::event::WindowEvent;
-use winit::event_loop::ActiveEventLoop;
-use winit::window::{Window, WindowAttributes};
-
-use redixel_core::RedixelError;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
+
+#[cfg(not(target_arch = "wasm32"))]
+use winit::dpi::LogicalSize;
+
+use winit::{
+    dpi::PhysicalSize,
+    event::WindowEvent,
+    event_loop::ActiveEventLoop,
+    window::{Window, WindowAttributes},
+};
+
+use redixel_core::RedixelError;
 
 #[derive(Debug, Clone)]
 pub struct WindowConfig {

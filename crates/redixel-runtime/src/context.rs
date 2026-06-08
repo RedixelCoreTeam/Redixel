@@ -1,10 +1,9 @@
-use redixel_core::RedixelError;
-use redixel_core::game::GameContext;
-use redixel_core::game::InputBind;
-use redixel_core::game::InputQuery;
-use redixel_core::input::InputAction;
-use redixel_math::Color;
-use redixel_math::Vec2;
+use redixel_core::{
+    RedixelError,
+    game::{GameContext, InputBind, InputQuery},
+    input::InputAction,
+};
+use redixel_math::{Color, Vec2};
 use redixel_platform::InputManager;
 
 /// A draw command buffered during `on_render` and flushed by the runtime.

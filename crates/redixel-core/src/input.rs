@@ -1,7 +1,6 @@
 use std::hash::Hash;
 
-pub use winit::event::MouseButton;
-pub use winit::keyboard::KeyCode;
+use winit::{event::MouseButton, keyboard::KeyCode};
 
 /// Trait bound for user-defined action enums.
 ///

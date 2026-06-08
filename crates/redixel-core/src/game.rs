@@ -1,6 +1,8 @@
-use crate::{InputAction, InputSource, KeyCode, MouseButton, RedixelError};
+use winit::{event::MouseButton, keyboard::KeyCode};
 
 use redixel_math::{Color, Vec2};
+
+use crate::{InputAction, InputSource, RedixelError};
 
 /// The entry point for user game logic.
 ///

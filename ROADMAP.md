@@ -42,6 +42,7 @@
 **Goal:** Decouple OS events from Game Logic.
 
 - [x] **Input Abstraction:** Create an "Action Mapping" system (bind "Jump" to "Space" or "A button").
+- [x] **Mouse Integration & Double Buffering:** Unified Action bindings for Keyboard and Mouse, preventing phantom clicks with a deferred state machine.
 - [ ] **Gamepad Integration:** Integrate `gilrs` to support USB/Bluetooth controllers alongside keyboard mappings.
 - [ ] **Touchscreen Support:** Map touch events (especially for WASM/Mobile environments) seamlessly into the Input Manager.
 - [ ] **Coordinate Conversion:** Implement math to convert Screen Coordinates (Pixels) to World Coordinates (Game Units).

@@ -166,7 +166,7 @@ impl Game for Pong {
 
         if ctx.input().just_pressed(Action::ToggleInput) {
             self.use_mouse_scroll = !self.use_mouse_scroll;
-            log::info!("Control Mode: {}", if self.use_mouse_scroll { "SCROLL" } else { "KEYBOARD" });
+            log::info!("CONTROL_MODE: {}", if self.use_mouse_scroll { "SCROLL" } else { "KEYBOARD" });
         }
 
         if self.use_mouse_scroll {

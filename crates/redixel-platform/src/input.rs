@@ -448,4 +448,46 @@ mod tests {
         assert!(!mgr.held(Action::Fire));
         assert!(mgr.just_released(Action::Fire));
     }
+
+    #[test]
+    fn mixed_source_same_action_either_triggers() {
+        let mut mgr: InputManager<Action> = InputManager::new();
+        mgr.bind(Action::Fire, KeyCode::KeyF.into());
+        mgr.bind(Action::Fire, MouseButton::Right.into());
+
+        mgr.process_event(&key_event(KeyCode::KeyF, ElementState::Pressed, false));
+        mgr.tick();
+        assert!(mgr.just_pressed(Action::Fire));
+
+        mgr.process_event(&key_event(KeyCode::KeyF, ElementState::Released, false));
+        mgr.tick();
+        assert!(mgr.just_released(Action::Fire));
+        mgr.tick();
+
+        mgr.process_event(&mouse_event(MouseButton::Right, ElementState::Pressed));
+        mgr.tick();
+        assert!(mgr.just_pressed(Action::Fire));
+
+        mgr.process_event(&mouse_event(MouseButton::Right, ElementState::Released));
+        mgr.tick();
+        assert!(mgr.just_released(Action::Fire));
+        mgr.tick();
+
+        mgr.process_event(&key_event(KeyCode::KeyF, ElementState::Pressed, false));
+        mgr.process_event(&mouse_event(MouseButton::Right, ElementState::Pressed));
+        mgr.tick();
+        assert!(mgr.just_pressed(Action::Fire));
+        assert!(mgr.held(Action::Fire));
+
+        mgr.process_event(&key_event(KeyCode::KeyF, ElementState::Released, false));
+        mgr.tick();
+        assert!(mgr.held(Action::Fire));
+        assert!(mgr.key_just_released(KeyCode::KeyF));
+        assert!(mgr.mouse_held(MouseButton::Right));
+
+        mgr.process_event(&mouse_event(MouseButton::Right, ElementState::Released));
+        mgr.tick();
+        assert!(!mgr.held(Action::Fire));
+        assert!(mgr.just_released(Action::Fire));
+    }
 }

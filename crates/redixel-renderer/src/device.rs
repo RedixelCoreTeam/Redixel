@@ -31,7 +31,7 @@ impl GpuDevice {
         let instance: Instance = Self::create_instance(cfg.backends);
         let surface: Surface<'_> = Self::create_surface(&instance, &window)?;
         let adapter: Adapter = Self::request_adapter(&instance, &surface).await?;
-        let (device, queue) = Self::request_device(&adapter).await?;
+        let (device, queue): (Device, Queue) = Self::request_device(&adapter).await?;
         let config: WgtSurfaceConfiguration<Vec<TextureFormat>> =
             Self::build_surface_config(&window, &surface, &adapter, cfg.present_mode);
         surface.configure(&device, &config);

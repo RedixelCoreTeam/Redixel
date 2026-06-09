@@ -73,7 +73,7 @@ impl Mat4 {
 
     /// Returns a 2D rotation matrix (rotation around the Z axis).
     pub fn rotate_z(radians: f32) -> Self {
-        let (sin, cos) = radians.sin_cos();
+        let (sin, cos): (f32, f32) = radians.sin_cos();
         let mut m: Mat4 = Self::IDENTITY;
         m.cols[0][0] = cos;
         m.cols[0][1] = sin;
@@ -119,7 +119,7 @@ mod tests {
     const EPS: f32 = 1e-5;
 
     fn approx_eq(a: [f32; 16], b: [f32; 16]) -> bool {
-        a.iter().zip(b.iter()).all(|(x, y)| (x - y).abs() < EPS)
+        a.iter().zip(b.iter()).all(|(x, y): (&f32, &f32)| (*x - *y).abs() < EPS)
     }
 
     #[test]

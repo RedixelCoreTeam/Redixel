@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::BufReader,
-    sync::{OnceLock, PoisonError, RwLock, RwLockReadGuard},
+    sync::{OnceLock, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
 
 use serde::{Deserialize, de::DeserializeOwned};
@@ -34,11 +34,13 @@ impl EngineSettings {
     }
 
     /// Acquires an exclusive write lock. Recovers gracefully from a poisoned lock.
-    pub fn global_write() -> std::sync::RwLockWriteGuard<'static, EngineSettings> {
-        Self::global().write().unwrap_or_else(|p| {
-            log::warn!("EngineSettings write-lock was poisoned — recovering.");
-            p.into_inner()
-        })
+    pub fn global_write() -> RwLockWriteGuard<'static, EngineSettings> {
+        Self::global()
+            .write()
+            .unwrap_or_else(|p: PoisonError<RwLockWriteGuard<'static, EngineSettings>>| {
+                log::warn!("EngineSettings write-lock was poisoned — recovering.");
+                p.into_inner()
+            })
     }
 
     /// Loads settings from a JSON file.
@@ -68,7 +70,7 @@ impl EngineSettings {
             }
         }
 
-        serde_json::from_value(node.clone()).unwrap_or_else(|_| {
+        serde_json::from_value(node.clone()).unwrap_or_else(|_: serde_json::Error| {
             log::warn!("Settings key `{path}` has an unexpected type, using default.");
             default
         })

@@ -1,5 +1,7 @@
 use redixel::prelude::*;
 
+type Face = (f32, (f32, f32, f32), (f32, f32, f32), (f32, f32, f32), Color);
+
 struct Triangle3d {
     rotation: f32,
 }
@@ -57,7 +59,7 @@ impl Game for Triangle3d {
             .map(|v: &(f32, f32, f32)| Self::rotate(v.0, v.1, v.2, self.rotation))
             .collect();
 
-        let mut faces_to_draw = Vec::new();
+        let mut faces_to_draw: Vec<Face> = Vec::new();
 
         for (i1, i2, i3, color) in faces.iter() {
             let v1: (f32, f32, f32) = rotated_vertices[*i1];
@@ -67,7 +69,7 @@ impl Game for Triangle3d {
             faces_to_draw.push((avg_z, v1, v2, v3, *color));
         }
 
-        faces_to_draw.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+        faces_to_draw.sort_by(|a: &Face, b: &Face| b.0.partial_cmp(&a.0).unwrap());
 
         for (_, v1, v2, v3, color) in faces_to_draw {
             let p1: Vec2 = Self::project(v1.0, v1.1, v1.2, center, scale);

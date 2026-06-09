@@ -135,7 +135,7 @@ impl<A: InputAction> InputManager<A> {
                     MouseScrollDelta::PixelDelta(px) => (px.x as f32 / 20.0, px.y as f32 / 20.0),
                 };
 
-                self.scroll_accumulator = Vec2::new(self.scroll_accumulator.x + dx, self.scroll_accumulator.y + dy);
+                self.scroll_accumulator += Vec2::new(dx, dy);
                 true
             }
 

@@ -7,9 +7,8 @@ use redixel_core::{Game, RedixelError};
 use redixel_runtime::{EngineSettings, Runtime};
 
 pub mod prelude {
-    pub use redixel_core::{Game, GameContext, InputSource, KeyState};
+    pub use redixel_core::{Game, GameContext, InputSource, KeyCode, KeyState, MouseButton};
     pub use redixel_math::{Color, Mat4, Vec2};
-    pub use winit::{event::MouseButton, keyboard::KeyCode};
 }
 
 pub fn run<G: Game>(game: G) -> Result<(), RedixelError> {

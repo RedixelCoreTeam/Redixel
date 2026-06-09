@@ -1,14 +1,8 @@
-use wgpu::Buffer;
-use wgpu::BufferDescriptor;
-use wgpu::BufferUsages;
-use wgpu::Device;
-use wgpu::Queue;
-use wgpu::RenderPass;
+use wgpu::{Buffer, BufferDescriptor, BufferUsages, Device, Queue, RenderPass};
+
+use redixel_math::{Color, Vec2};
 
 use crate::pipeline::Vertex;
-
-use redixel_math::Color;
-use redixel_math::Vec2;
 
 const MAX_QUADS: usize = 10_000;
 const MAX_VERTICES: usize = MAX_QUADS * 6;

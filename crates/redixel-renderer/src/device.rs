@@ -1,31 +1,17 @@
 use std::sync::Arc;
 
-use wgpu::Adapter;
-use wgpu::Backends;
-use wgpu::Device;
-use wgpu::ExperimentalFeatures;
-use wgpu::Features;
-use wgpu::Instance;
-use wgpu::InstanceDescriptor;
-use wgpu::MemoryHints;
-use wgpu::PowerPreference;
-use wgpu::PresentMode;
-use wgpu::Queue;
-use wgpu::RequestAdapterOptions;
-use wgpu::Surface;
-use wgpu::SurfaceCapabilities;
-use wgpu::SurfaceConfiguration;
-use wgpu::TextureFormat;
-use wgpu::TextureUsages;
-use wgpu::Trace;
-use wgpu::wgt::DeviceDescriptor;
-use wgpu::wgt::SurfaceConfiguration as WgtSurfaceConfiguration;
+use wgpu::{
+    Adapter, Backends, Device, ExperimentalFeatures, Features, Instance, InstanceDescriptor, MemoryHints,
+    PowerPreference, PresentMode, Queue, RequestAdapterOptions, Surface, SurfaceCapabilities, SurfaceConfiguration,
+    TextureFormat, TextureUsages, Trace,
+    wgt::{DeviceDescriptor, SurfaceConfiguration as WgtSurfaceConfiguration},
+};
 
-use winit::dpi::PhysicalSize;
-use winit::window::Window;
+use winit::{dpi::PhysicalSize, window::Window};
+
+use redixel_core::RedixelError;
 
 use crate::renderer::RendererConfig;
-use redixel_core::RedixelError;
 
 /// Owns the WGPU logical device, presentation surface, and submission queue.
 ///

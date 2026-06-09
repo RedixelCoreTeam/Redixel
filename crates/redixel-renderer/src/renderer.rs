@@ -1,30 +1,16 @@
 use std::sync::Arc;
 
-use wgpu::Backends;
-use wgpu::CommandEncoder;
-use wgpu::CommandEncoderDescriptor;
-use wgpu::LoadOp;
-use wgpu::Operations;
-use wgpu::PresentMode;
-use wgpu::RenderPass;
-use wgpu::RenderPassColorAttachment;
-use wgpu::RenderPassDescriptor;
-use wgpu::StoreOp;
-use wgpu::SurfaceTexture;
-use wgpu::TextureView;
-use wgpu::TextureViewDescriptor;
+use wgpu::{
+    Backends, CommandEncoder, CommandEncoderDescriptor, LoadOp, Operations, PresentMode, RenderPass,
+    RenderPassColorAttachment, RenderPassDescriptor, StoreOp, SurfaceTexture, TextureView, TextureViewDescriptor,
+};
 
-use winit::dpi::PhysicalSize;
-use winit::window::Window;
+use winit::{dpi::PhysicalSize, window::Window};
 
 use redixel_core::RedixelError;
-use redixel_math::Color;
-use redixel_math::Mat4;
-use redixel_math::Vec2;
+use redixel_math::{Color, Mat4, Vec2};
 
-use crate::batch::SpriteBatch;
-use crate::device::GpuDevice;
-use crate::pipeline::ShapePipeline;
+use crate::{batch::SpriteBatch, device::GpuDevice, pipeline::ShapePipeline};
 
 /// All renderer settings resolved from `config.json` by `redixel-runtime`
 /// and injected at construction time. The renderer never touches the config system.

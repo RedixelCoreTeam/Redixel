@@ -15,19 +15,15 @@ impl Game for Triangle {
         let h: f32 = ctx.surface_height() as f32;
         let w: f32 = ctx.surface_width() as f32;
 
-        let center_x: f32 = w / 2.0;
-        let center_y: f32 = h / 2.0;
-
+        let center: Vec2 = Vec2::new(w / 2.0, h / 2.0);
         let min_dimension: f32 = w.min(h);
 
         let scale_factor: f32 = 0.20;
-        let triangle_size: f32 = min_dimension * scale_factor;
+        let half_size: f32 = (min_dimension * scale_factor) / 2.0;
 
-        let half_size: f32 = triangle_size / 2.0;
-
-        let p1: Vec2 = Vec2::new(center_x, center_y - half_size);
-        let p2: Vec2 = Vec2::new(center_x - half_size, center_y + half_size);
-        let p3: Vec2 = Vec2::new(center_x + half_size, center_y + half_size);
+        let p1: Vec2 = center - Vec2::new(0.0, half_size);
+        let p2: Vec2 = center + Vec2::new(-half_size, half_size);
+        let p3: Vec2 = center + Vec2::splat(half_size);
 
         ctx.draw_triangle(p1, p2, p3, Color::rgb(1.0, 0.5, 0.0));
     }

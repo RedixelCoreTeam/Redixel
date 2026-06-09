@@ -1,39 +1,11 @@
-use wgpu::BindGroup;
-use wgpu::BindGroupDescriptor;
-use wgpu::BindGroupEntry;
-use wgpu::BindGroupLayout;
-use wgpu::BindGroupLayoutDescriptor;
-use wgpu::BindGroupLayoutEntry;
-use wgpu::BindingResource;
-use wgpu::BindingType;
-use wgpu::BlendState;
-use wgpu::Buffer;
-use wgpu::BufferBindingType;
-use wgpu::BufferDescriptor;
-use wgpu::BufferUsages;
-use wgpu::ColorTargetState;
-use wgpu::ColorWrites;
-use wgpu::Device;
-use wgpu::FragmentState;
-use wgpu::FrontFace;
-use wgpu::MultisampleState;
-use wgpu::PipelineLayout;
-use wgpu::PipelineLayoutDescriptor;
-use wgpu::PolygonMode;
-use wgpu::PrimitiveState;
-use wgpu::PrimitiveTopology;
-use wgpu::Queue;
-use wgpu::RenderPipeline;
-use wgpu::RenderPipelineDescriptor;
-use wgpu::ShaderModule;
-use wgpu::ShaderModuleDescriptor;
-use wgpu::ShaderSource;
-use wgpu::ShaderStages;
-use wgpu::TextureFormat;
-use wgpu::VertexAttribute;
-use wgpu::VertexBufferLayout;
-use wgpu::VertexState;
-use wgpu::VertexStepMode;
+use wgpu::{
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
+    BindingResource, BindingType, BlendState, Buffer, BufferBindingType, BufferDescriptor, BufferUsages,
+    ColorTargetState, ColorWrites, Device, FragmentState, FrontFace, MultisampleState, PipelineLayout,
+    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology, Queue, RenderPipeline,
+    RenderPipelineDescriptor, ShaderModule, ShaderModuleDescriptor, ShaderSource, ShaderStages, TextureFormat,
+    VertexAttribute, VertexBufferLayout, VertexState, VertexStepMode,
+};
 
 const SHADER_SRC: &str = include_str!("../shaders/shape.wgsl");
 

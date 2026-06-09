@@ -75,6 +75,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Created the `DrawCommand` queue to buffer rendering primitives (`ClearColor`, `Rect`, `Triangle`) with intelligent deduplication logic.
 - **Engine Prelude**:
   - Added `redixel::prelude::*` to drastically improve Developer Experience (DX) and streamline imports for game developers.
+- **Unified InputSource System**:
+  - Introduced the `InputSource` enum in `redixel-core` to seamlessly merge `KeyCode` and `MouseButton` bindings.
+  - Added native mouse querying methods to `InputQuery` (`mouse_just_pressed`, `mouse_held`, `mouse_just_released`).
+  - Added support for real-time cursor position tracking (`mouse_position`) and mouse wheel delta accumulation (`scroll_delta`).
 
 ### Changed
 
@@ -92,3 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Removed dead code (e.g., `SetLoggerError` from engine error variants) to ensure the framework remains unopinionated about the consumer's logging setup.
 - **Internal API Encapsulation**: Refactored internal crates (`redixel-runtime`, `redixel-platform`) to use private modules and surgical `pub use` exports, preventing namespace pollution and protecting internal structures.
 - **Event Loop Cascading**: Streamlined the main event loop using the _Chain of Responsibility_ pattern, safely delegating OS events between the `Context` and `WindowManager`.
+- **InputManager Refactoring & Double Buffering**:
+  - `InputBind::bind` now accepts a unified `InputSource` instead of a raw `KeyCode`, altering the public API.
+  - Implemented a robust **Double Buffering** system with event queues (`pending_keys`, `pending_mouse`) to prevent dropped OS events.
+  - Added a **Deferral Strategy** within the `tick()` lifecycle to completely eliminate "Phantom Clicks" (rapid press/release events within the same frame are now safely buffered and executed across frames).

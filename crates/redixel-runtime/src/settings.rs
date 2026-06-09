@@ -1,16 +1,13 @@
-use std::fs::File;
-use std::io::BufReader;
-use std::sync::OnceLock;
-use std::sync::PoisonError;
-use std::sync::RwLock;
-use std::sync::RwLockReadGuard;
+use std::{
+    fs::File,
+    io::BufReader,
+    sync::{OnceLock, PoisonError, RwLock, RwLockReadGuard},
+};
 
-use serde::Deserialize;
-use serde::de::DeserializeOwned;
+use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::Value;
 
-use wgpu::Backends;
-use wgpu::PresentMode;
+use wgpu::{Backends, PresentMode};
 
 use redixel_core::RedixelError;
 

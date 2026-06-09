@@ -23,29 +23,7 @@ This ensures you see the same errors locally that the CI will report remotely.
 
 We enforce a strict coding style that differs slightly from standard Rust defaults, particularly regarding imports and type definitions.
 
-### 1\. Import Syntax (Vertical Imports)
-
-We **DO NOT** use nested/grouped imports (braces `{}`). Each import must be on its own line. This improves diff readability in Git and prevents merge conflicts.
-
-**Incorrect:**
-
-```rust
-use wgpu::{Device, Queue, Surface};
-use std::sync::{Arc, Mutex};
-```
-
-**Correct:**
-
-```rust
-use std::sync::Arc;
-use std::sync::Mutex;
-
-use wgpu::Device;
-use wgpu::Queue;
-use wgpu::Surface;
-```
-
-### 2\. Import Ordering & Grouping
+### 1\. Import Ordering & Grouping
 
 Imports must be organized in strict blocks separated by a blank line.
 
@@ -72,7 +50,7 @@ use redixel_core::RedixelError;
 use redixel_renderer::Renderer;
 ```
 
-### 3\. Type Definitions & Return Types
+### 2\. Type Definitions & Return Types
 
 Avoid fully qualified paths inside function signatures or variable declarations. Always import the type first. This keeps signatures clean and readable.
 
@@ -93,7 +71,7 @@ fn create_instance() -> Instance { ... }
 fn create_instance() -> wgpu::Instance { ... }
 ```
 
-### 4\. Explicit Typing
+### 3\. Explicit Typing
 
 While Rust has type inference, we encourage explicit type annotations for variable declarations when initializing complex structs or engine subsystems. This makes the code self-documenting.
 
@@ -105,7 +83,7 @@ let instance: Instance = Instance::new(...);
 let surface: Surface = instance.create_surface(...);
 ```
 
-### 5\. Documentation & Comments
+### 4\. Documentation & Comments
 
 - **Self-Documenting Code:** Prioritize clear naming for variables and functions over comments.
 - **Context over Triviality:** Do not comment on trivial logic. Use comments to explain **WHY** a specific approach was taken, especially for complex math, unsafe blocks, or platform-specific hacks.

@@ -16,10 +16,10 @@ impl Triangle3d {
         (rx, ry, rz_final)
     }
 
-    fn project(x: f32, y: f32, z: f32, center_x: f32, center_y: f32, scale: f32) -> Vec2 {
+    fn project(x: f32, y: f32, z: f32, center: Vec2, scale: f32) -> Vec2 {
         let distance: f32 = 2.5;
         let z_perspective: f32 = distance + z;
-        Vec2::new(center_x + (x / z_perspective) * scale, center_y + (y / z_perspective) * scale)
+        center + (Vec2::new(x, y) / z_perspective) * scale
     }
 }
 
@@ -40,10 +40,9 @@ impl Game for Triangle3d {
 
         let h: f32 = ctx.surface_height() as f32;
         let w: f32 = ctx.surface_width() as f32;
-        let center_x: f32 = w / 2.0;
-        let center_y: f32 = h / 2.0;
-        let scale: f32 = w.min(h) * 0.40;
 
+        let scale: f32 = w.min(h) * 0.40;
+        let center: Vec2 = Vec2::new(w / 2.0, h / 2.0);
         let vertices: [(f32, f32, f32); 4] = [(0.0, -0.8, 0.0), (-0.8, 0.6, 0.5), (0.8, 0.6, 0.5), (0.0, 0.6, -0.8)];
 
         let faces: [(usize, usize, usize, Color); 4] = [
@@ -71,9 +70,9 @@ impl Game for Triangle3d {
         faces_to_draw.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
 
         for (_, v1, v2, v3, color) in faces_to_draw {
-            let p1: Vec2 = Self::project(v1.0, v1.1, v1.2, center_x, center_y, scale);
-            let p2: Vec2 = Self::project(v2.0, v2.1, v2.2, center_x, center_y, scale);
-            let p3: Vec2 = Self::project(v3.0, v3.1, v3.2, center_x, center_y, scale);
+            let p1: Vec2 = Self::project(v1.0, v1.1, v1.2, center, scale);
+            let p2: Vec2 = Self::project(v2.0, v2.1, v2.2, center, scale);
+            let p3: Vec2 = Self::project(v3.0, v3.1, v3.2, center, scale);
             ctx.draw_triangle(p1, p2, p3, color);
         }
     }

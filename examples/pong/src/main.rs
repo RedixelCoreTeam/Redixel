@@ -25,7 +25,7 @@ struct Paddle {
 impl Paddle {
     fn new() -> Self {
         Self {
-            pos: Vec2::new(0.0, 0.0),
+            pos: Vec2::ZERO,
             vel_y: 0.0,
         }
     }
@@ -47,7 +47,7 @@ struct Ball {
 impl Ball {
     fn new() -> Self {
         Self {
-            pos: Vec2::new(0.0, 0.0),
+            pos: Vec2::ZERO,
             vel: Vec2::new(BALL_SPEED, BALL_SPEED * 0.65),
         }
     }

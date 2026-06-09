@@ -128,6 +128,87 @@ impl Shooter {
     fn check_collision(pos1: Vec2, size1: f32, pos2: Vec2, size2: f32) -> bool {
         pos1.x + size1 > pos2.x && pos1.x < pos2.x + size2 && pos1.y + size1 > pos2.y && pos1.y < pos2.y + size2
     }
+
+    fn spawn_bullets(
+        bullets: &mut Vec<Bullet>,
+        owner_id: usize,
+        weapon: WeaponType,
+        center: Vec2,
+        dir_vec: Vec2,
+        time_since_start: f32,
+    ) {
+        match weapon {
+            WeaponType::Pistol => {
+                bullets.push(Bullet {
+                    pos: center,
+                    vel: dir_vec * BULLET_SPEED,
+                    owner_id,
+                    weapon: WeaponType::Pistol,
+                    life: 3.0,
+                    destroyed: false,
+                    size: BULLET_SIZE,
+                });
+            }
+            WeaponType::Shotgun => {
+                let angles: [f32; 5] = [-0.3, -0.15, 0.0, 0.15, 0.3];
+
+                for &angle in &angles {
+                    let cos_a: f32 = angle.cos();
+                    let sin_a: f32 = angle.sin();
+
+                    let rot_vel: Vec2 =
+                        Vec2::new(dir_vec.x * cos_a - dir_vec.y * sin_a, dir_vec.x * sin_a + dir_vec.y * cos_a);
+
+                    bullets.push(Bullet {
+                        pos: center,
+                        vel: rot_vel * BULLET_SPEED,
+                        owner_id,
+                        weapon: WeaponType::Shotgun,
+                        life: 0.6,
+                        destroyed: false,
+                        size: BULLET_SIZE,
+                    });
+                }
+            }
+            WeaponType::Flamethrower => {
+                let offsets: [f32; 6] = [-0.4, -0.2, -0.05, 0.05, 0.2, 0.4];
+                let speeds: [f32; 6] = [0.85, 1.0, 1.1, 0.95, 1.05, 0.9];
+                let sizes: [f32; 6] = [12.0, 18.0, 24.0, 20.0, 16.0, 14.0];
+
+                for i in 0..6 {
+                    let wobble: f32 = (time_since_start * 25.0 + (i as f32)).sin() * 0.15;
+                    let angle: f32 = offsets[i] + wobble;
+
+                    let cos_a: f32 = angle.cos();
+                    let sin_a: f32 = angle.sin();
+
+                    let rot_vel: Vec2 =
+                        Vec2::new(dir_vec.x * cos_a - dir_vec.y * sin_a, dir_vec.x * sin_a + dir_vec.y * cos_a);
+
+                    bullets.push(Bullet {
+                        pos: center - Vec2::splat(sizes[i] / 2.0),
+                        vel: rot_vel * (BULLET_SPEED * speeds[i]),
+                        owner_id,
+                        weapon: WeaponType::Flamethrower,
+                        life: 0.9,
+                        destroyed: false,
+                        size: sizes[i],
+                    });
+                }
+            }
+            WeaponType::Homing => {
+                bullets.push(Bullet {
+                    pos: center,
+                    vel: dir_vec * (BULLET_SPEED * 0.6),
+                    owner_id,
+                    weapon: WeaponType::Homing,
+                    life: 4.0,
+                    destroyed: false,
+                    size: BULLET_SIZE,
+                });
+            }
+        }
+    }
 }
 
 impl Game for Shooter {
@@ -201,19 +282,19 @@ impl Game for Shooter {
                 let mut dir: Vec2 = Vec2::ZERO;
 
                 if ctx.input().held(Action::Left) {
-                    dir.x -= 1.0;
+                    dir -= Vec2::X;
                 }
 
                 if ctx.input().held(Action::Right) {
-                    dir.x += 1.0;
+                    dir += Vec2::X;
                 }
 
                 if ctx.input().held(Action::Up) {
-                    dir.y -= 1.0;
+                    dir -= Vec2::Y;
                 }
 
                 if ctx.input().held(Action::Down) {
-                    dir.y += 1.0;
+                    dir += Vec2::Y;
                 }
 
                 if dir.x != 0.0 || dir.y != 0.0 {
@@ -233,79 +314,14 @@ impl Game for Shooter {
                         agent.shoot_cooldown = agent.current_cooldown_max();
                         let dir_vec: Vec2 = dir_raw / mag;
 
-                        match agent.weapon {
-                            WeaponType::Pistol => {
-                                self.bullets.push(Bullet {
-                                    pos: center,
-                                    vel: dir_vec * BULLET_SPEED,
-                                    owner_id: agent.id,
-                                    weapon: WeaponType::Pistol,
-                                    life: 3.0,
-                                    destroyed: false,
-                                    size: BULLET_SIZE,
-                                });
-                            }
-                            WeaponType::Shotgun => {
-                                let angles: [f32; 5] = [-0.3, -0.15, 0.0, 0.15, 0.3];
-
-                                for &angle in &angles {
-                                    let cos_a: f32 = angle.cos();
-                                    let sin_a: f32 = angle.sin();
-                                    let rot_vel: Vec2 = Vec2::new(
-                                        dir_vec.x * cos_a - dir_vec.y * sin_a,
-                                        dir_vec.x * sin_a + dir_vec.y * cos_a,
-                                    );
-
-                                    self.bullets.push(Bullet {
-                                        pos: center,
-                                        vel: rot_vel * BULLET_SPEED,
-                                        owner_id: agent.id,
-                                        weapon: WeaponType::Shotgun,
-                                        life: 0.6,
-                                        destroyed: false,
-                                        size: BULLET_SIZE,
-                                    });
-                                }
-                            }
-                            WeaponType::Flamethrower => {
-                                let offsets: [f32; 6] = [-0.4, -0.2, -0.05, 0.05, 0.2, 0.4];
-                                let speeds: [f32; 6] = [0.35, 0.5, 0.6, 0.45, 0.55, 0.4];
-                                let sizes: [f32; 6] = [10.0, 16.0, 20.0, 18.0, 14.0, 12.0];
-
-                                for i in 0..6 {
-                                    let wobble: f32 = (self.time_since_start * 25.0 + (i as f32)).sin() * 0.15;
-                                    let angle: f32 = offsets[i] + wobble;
-
-                                    let cos_a: f32 = angle.cos();
-                                    let sin_a: f32 = angle.sin();
-                                    let rot_vel: Vec2 = Vec2::new(
-                                        dir_vec.x * cos_a - dir_vec.y * sin_a,
-                                        dir_vec.x * sin_a + dir_vec.y * cos_a,
-                                    );
-
-                                    self.bullets.push(Bullet {
-                                        pos: center - Vec2::splat(sizes[i] / 2.0),
-                                        vel: rot_vel * (BULLET_SPEED * speeds[i]),
-                                        owner_id: agent.id,
-                                        weapon: WeaponType::Flamethrower,
-                                        life: 0.35,
-                                        destroyed: false,
-                                        size: sizes[i],
-                                    });
-                                }
-                            }
-                            WeaponType::Homing => {
-                                self.bullets.push(Bullet {
-                                    pos: center,
-                                    vel: dir_vec * (BULLET_SPEED * 0.6),
-                                    owner_id: agent.id,
-                                    weapon: WeaponType::Homing,
-                                    life: 4.0,
-                                    destroyed: false,
-                                    size: BULLET_SIZE,
-                                });
-                            }
-                        }
+                        Self::spawn_bullets(
+                            &mut self.bullets,
+                            agent.id,
+                            agent.weapon,
+                            center,
+                            dir_vec,
+                            self.time_since_start,
+                        );
                     }
                 }
             } else {
@@ -329,15 +345,14 @@ impl Game for Shooter {
                     if agent.shoot_cooldown <= 0.0 {
                         agent.shoot_cooldown = agent.current_cooldown_max();
 
-                        self.bullets.push(Bullet {
-                            pos: center,
-                            vel: dir_vec * BULLET_SPEED,
-                            owner_id: agent.id,
-                            weapon: agent.weapon,
-                            life: 2.0,
-                            destroyed: false,
-                            size: BULLET_SIZE,
-                        });
+                        Self::spawn_bullets(
+                            &mut self.bullets,
+                            agent.id,
+                            agent.weapon,
+                            center,
+                            dir_vec,
+                            self.time_since_start,
+                        );
                     }
                 }
             }
@@ -345,7 +360,7 @@ impl Game for Shooter {
             agent.pos.x = agent.pos.x.clamp(0.0, w - ENTITY_SIZE);
             agent.pos.y = agent.pos.y.clamp(0.0, h - ENTITY_SIZE);
 
-            if self.powerup.active && Shooter::check_collision(agent.pos, ENTITY_SIZE, self.powerup.pos, POWERUP_SIZE) {
+            if self.powerup.active && Self::check_collision(agent.pos, ENTITY_SIZE, self.powerup.pos, POWERUP_SIZE) {
                 agent.weapon = self.powerup.weapon;
                 agent.rapid_fire_timer = POWERUP_DURATION;
                 self.powerup.active = false;
@@ -399,7 +414,7 @@ impl Game for Shooter {
             let owner_i: usize = self.bullets[i].owner_id;
 
             for agent in self.agents.iter_mut() {
-                if agent.id != owner_i && Shooter::check_collision(pos_i, size_i, agent.pos, ENTITY_SIZE) {
+                if agent.id != owner_i && Self::check_collision(pos_i, size_i, agent.pos, ENTITY_SIZE) {
                     agent.health -= 25;
 
                     if agent.health <= 0 {
@@ -428,8 +443,9 @@ impl Game for Shooter {
 
                 if owner_i != self.bullets[j].owner_id {
                     let pos_j: Vec2 = self.bullets[j].pos;
+                    let size_j: f32 = self.bullets[j].size;
 
-                    if Shooter::check_collision(pos_i, size_i, pos_j, ENTITY_SIZE) {
+                    if Self::check_collision(pos_i, size_i, pos_j, size_j) {
                         self.bullets[i].destroyed = true;
                         self.bullets[j].destroyed = true;
                         break;
@@ -442,10 +458,29 @@ impl Game for Shooter {
     }
 
     fn on_render(&mut self, ctx: &mut dyn GameContext<Self::Action>) {
-        ctx.clear_color(Color::rgb(0.1, 0.1, 0.15));
+        let w: f32 = ctx.surface_width() as f32;
+        let h: f32 = ctx.surface_height() as f32;
+
+        ctx.clear_color(Color::rgb(0.12, 0.12, 0.15));
+
+        let grid_color: Color = Color::rgb(0.17, 0.17, 0.2);
+        let mut x: f32 = 0.0;
+        while x < w {
+            ctx.draw_rect(Vec2::new(x, 0.0), Vec2::new(1.0, h), grid_color);
+            x += 60.0;
+        }
+
+        let mut y: f32 = 0.0;
+        while y < h {
+            ctx.draw_rect(Vec2::new(0.0, y), Vec2::new(w, 1.0), grid_color);
+            y += 60.0;
+        }
 
         if self.powerup.active {
             let pulse: f32 = (self.time_since_start * 5.0).sin().abs();
+            let p_size: f32 = POWERUP_SIZE + (pulse * 4.0);
+            let p_offset: Vec2 = Vec2::splat((p_size - POWERUP_SIZE) / 2.0);
+            let p_draw_pos: Vec2 = self.powerup.pos - p_offset;
 
             let c: Color = match self.powerup.weapon {
                 WeaponType::Shotgun => Color::from_rgba8(255, 165, 0, (150.0 + pulse * 100.0) as u8),
@@ -454,7 +489,13 @@ impl Game for Shooter {
                 WeaponType::Pistol => Color::from_rgba8(200, 50, 255, (150.0 + pulse * 100.0) as u8),
             };
 
-            ctx.draw_rect(self.powerup.pos, Vec2::splat(POWERUP_SIZE), c);
+            ctx.draw_rect(
+                p_draw_pos + Vec2::splat(3.0),
+                Vec2::splat(p_size),
+                Color::from_rgba8(0, 0, 0, 150),
+            );
+
+            ctx.draw_rect(p_draw_pos, Vec2::splat(p_size), c);
         }
 
         let agents_len: usize = self.agents.len();
@@ -467,20 +508,34 @@ impl Game for Shooter {
                 agent.color
             };
 
+            ctx.draw_rect(
+                agent.pos + Vec2::splat(3.0),
+                Vec2::splat(ENTITY_SIZE),
+                Color::from_rgba8(0, 0, 0, 150),
+            );
+
             ctx.draw_rect(agent.pos, Vec2::splat(ENTITY_SIZE), color);
+
+            let hp_percent: f32 = (agent.health.max(0) as f32) / 100.0;
+            let hp_pos: Vec2 = agent.pos - (Vec2::Y * 8.0);
+
+            ctx.draw_rect(hp_pos, Vec2::new(ENTITY_SIZE, 4.0), Color::rgb(0.7, 0.1, 0.1));
+            ctx.draw_rect(hp_pos, Vec2::new(ENTITY_SIZE * hp_percent, 4.0), Color::rgb(0.1, 0.8, 0.2));
         }
 
         let bullets_len: usize = self.bullets.len();
         for i in 0..bullets_len {
             let b: &Bullet = &self.bullets[i];
 
-            let b_color: Color = match b.weapon {
-                WeaponType::Pistol => Color::YELLOW,
-                WeaponType::Shotgun => Color::from_rgba8(255, 165, 0, 255),
-                WeaponType::Flamethrower => Color::from_rgba8(255, 50, 0, 255),
-                WeaponType::Homing => Color::from_rgba8(50, 255, 255, 255),
+            let (b_color, glow_color): (Color, Color) = match b.weapon {
+                WeaponType::Pistol => (Color::YELLOW, Color::from_rgba8(255, 255, 0, 50)),
+                WeaponType::Shotgun => (Color::from_rgba8(255, 165, 0, 255), Color::from_rgba8(255, 165, 0, 50)),
+                WeaponType::Flamethrower => (Color::from_rgba8(255, 70, 0, 255), Color::from_rgba8(255, 70, 0, 50)),
+                WeaponType::Homing => (Color::from_rgba8(50, 255, 255, 255), Color::from_rgba8(50, 255, 255, 50)),
             };
 
+            ctx.draw_rect(b.pos + Vec2::splat(2.0), Vec2::splat(b.size), Color::from_rgba8(0, 0, 0, 100));
+            ctx.draw_rect(b.pos - Vec2::splat(4.0), Vec2::splat(b.size + 8.0), glow_color);
             ctx.draw_rect(b.pos, Vec2::splat(b.size), b_color);
         }
 

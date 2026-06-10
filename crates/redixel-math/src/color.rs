@@ -58,7 +58,7 @@ impl Color {
     /// Blends linearly toward `other` by factor `t ∈ [0, 1]`.
     #[inline]
     pub fn lerp(self, other: Self, t: f32) -> Self {
-        let lerp = |a: f32, b: f32| a + (b - a) * t;
+        let lerp = |a: f32, b: f32| -> f32 { a + (b - a) * t };
         Self::rgba(
             lerp(self.r, other.r),
             lerp(self.g, other.g),

@@ -101,7 +101,7 @@ impl Renderer {
     /// 3. Flushes the sprite batch (one draw call)
     /// 4. Submits commands and presents
     pub fn render(&mut self) -> Result<(), RedixelError> {
-        let (w, h) = self.surface_size();
+        let (w, h): (u32, u32) = self.surface_size();
 
         let projection: Mat4 = Mat4::orthographic(0.0, w as f32, h as f32, 0.0, -1.0, 1.0);
         self.pipeline.update_camera(&self.device.queue, projection.cols);

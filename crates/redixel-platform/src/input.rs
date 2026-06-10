@@ -130,7 +130,7 @@ impl<A: InputAction> InputManager<A> {
             }
 
             WindowEvent::MouseWheel { delta, .. } => {
-                let (dx, dy) = match delta {
+                let (dx, dy): (f32, f32) = match delta {
                     MouseScrollDelta::LineDelta(x, y) => (*x, *y),
                     MouseScrollDelta::PixelDelta(px) => (px.x as f32 / 20.0, px.y as f32 / 20.0),
                 };

@@ -162,11 +162,11 @@ mod tests {
         let mut tm: TimeManager = TimeManager::new();
         let mut fired: bool = false;
 
-        tm.every_seconds(0.05, |_| fired = true);
+        tm.every_seconds(0.05, |_: f64| fired = true);
         assert!(!fired);
 
         thread::sleep(Duration::from_millis(60));
-        tm.every_seconds(0.05, |_| fired = true);
+        tm.every_seconds(0.05, |_: f64| fired = true);
         assert!(fired);
     }
 

@@ -41,7 +41,7 @@ impl Vec2 {
 
     #[inline]
     pub fn normalise(self) -> Self {
-        let len = self.length();
+        let len: f32 = self.length();
         if len > f32::EPSILON { self / len } else { Self::ZERO }
     }
 

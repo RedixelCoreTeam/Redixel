@@ -2,7 +2,6 @@
 //
 // Draws coloured, axis-aligned quads from a per-vertex colour attribute.
 // The ortho projection matrix is updated once per frame via a uniform buffer.
-
 struct CameraUniforms {
     projection: mat4x4<f32>,
 }

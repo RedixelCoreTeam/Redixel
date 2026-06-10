@@ -51,7 +51,7 @@ pub struct Runtime<G: Game> {
 
 impl<G: Game> Runtime<G> {
     pub fn new(game: G) -> Self {
-        let (bridge_tx, bridge_rx) = mpsc::channel();
+        let (bridge_tx, bridge_rx): (Sender<BridgePayload>, Receiver<BridgePayload>) = mpsc::channel();
         Self {
             state: AppState::Initializing,
             pending_game: Some(game),
@@ -115,25 +115,31 @@ impl<G: Game> Runtime<G> {
         log::info!("[3/3] Redixel is running.");
     }
 
+    async fn init_gpu(
+        tx: Sender<BridgePayload>,
+        window: Arc<dyn Window>,
+        window_mgr: WindowManager,
+        proxy: EventLoopProxy,
+        config: RendererConfig,
+    ) {
+        let result: Result<(Renderer, WindowManager), RedixelError> =
+            Renderer::new(window, config).await.map(|r: Renderer| (r, window_mgr));
+
+        tx.send(result).ok();
+        proxy.wake_up();
+    }
+
     fn spawn_gpu_init(&self, event_loop: &dyn ActiveEventLoop, window_mgr: WindowManager) {
         let tx: Sender<BridgePayload> = self.bridge_tx.clone();
         let window: Arc<dyn Window> = window_mgr.window_arc();
         let proxy: EventLoopProxy = event_loop.create_proxy();
         let config: RendererConfig = Self::build_renderer_config();
 
-        let task = async move {
-            let result: Result<(Renderer, WindowManager), RedixelError> =
-                Renderer::new(window, config).await.map(|r: Renderer| (r, window_mgr));
-
-            tx.send(result).ok();
-            proxy.wake_up();
-        };
-
         #[cfg(target_arch = "wasm32")]
-        wasm_bindgen_futures::spawn_local(task);
+        wasm_bindgen_futures::spawn_local(Self::init_gpu(tx, window, window_mgr, proxy, config));
 
         #[cfg(not(target_arch = "wasm32"))]
-        std::thread::spawn(move || pollster::block_on(task));
+        std::thread::spawn(move || pollster::block_on(Self::init_gpu(tx, window, window_mgr, proxy, config)));
     }
 
     fn on_can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {

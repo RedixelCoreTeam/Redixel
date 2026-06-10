@@ -96,24 +96,25 @@ impl WindowManager {
     fn apply_platform_attrs(attrs: WindowAttributes, config: &WindowConfig) -> Result<WindowAttributes, RedixelError> {
         use winit::platform::web::WindowAttributesWeb;
 
-        let web_window = web_sys::window().ok_or(RedixelError::JsException("Global 'window' not found."))?;
+        let web_window: web_sys::Window =
+            web_sys::window().ok_or(RedixelError::JsException("Global 'window' not found."))?;
 
-        let document = web_window
+        let document: web_sys::Document = web_window
             .document()
             .ok_or(RedixelError::JsException("Global 'document' not found."))?;
 
-        let body = document
+        let body: web_sys::HtmlElement = document
             .body()
             .ok_or(RedixelError::JsException("Global 'body' not found."))?;
 
-        let canvas = match document.get_element_by_id("redixel-canvas") {
+        let canvas: web_sys::HtmlCanvasElement = match document.get_element_by_id("redixel-canvas") {
             Some(elem) => elem
                 .dyn_into::<web_sys::HtmlCanvasElement>()
                 .map_err(|_| RedixelError::JsException("Element is not a <canvas>."))?,
             None => {
                 log::info!("Injecting Redixel canvas into DOM...");
 
-                let elem = document
+                let elem: web_sys::Element = document
                     .create_element("canvas")
                     .map_err(|_| RedixelError::JsException("Failed to create <canvas>."))?;
 
@@ -126,8 +127,8 @@ impl WindowManager {
             }
         };
 
-        let body_style = body.style();
-        let canvas_style = canvas.style();
+        let body_style: web_sys::CssStyleDeclaration = body.style();
+        let canvas_style: web_sys::CssStyleDeclaration = canvas.style();
 
         Self::set_css_property(&body_style, "margin", "0")?;
         Self::set_css_property(&body_style, "padding", "0")?;
@@ -146,7 +147,7 @@ impl WindowManager {
             Self::set_css_property(&canvas_style, "height", &format!("{}px", config.height))?;
         }
 
-        let web_attrs = WindowAttributesWeb::default().with_canvas(Some(canvas));
+        let web_attrs: WindowAttributesWeb = WindowAttributesWeb::default().with_canvas(Some(canvas));
         Ok(attrs.with_platform_attributes(Box::new(web_attrs)))
     }
 }

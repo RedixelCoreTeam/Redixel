@@ -7,7 +7,7 @@ use redixel_core::{Game, RedixelError};
 use redixel_runtime::{EngineSettings, Runtime};
 
 pub mod prelude {
-    pub use redixel_core::{Game, GameContext, InputSource, KeyCode, KeyState, MouseButton};
+    pub use redixel_core::{Game, GameContext, InputSource, KeyCode, KeyState, MouseButton, RedixelError};
     pub use redixel_math::{Color, Mat4, Vec2};
 }
 

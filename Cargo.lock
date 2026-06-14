@@ -1269,6 +1269,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1616,6 +1617,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1854,6 +1856,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1865,6 +1868,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]

@@ -4,6 +4,11 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[package.metadata.game]
+title = "Triangle 3D"
+description = "A rotating 3D triangle demonstrating mathematical projections, Z-sorting, and 3D transformations."
+tags = ["3D", "Math", "Projection"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

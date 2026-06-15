@@ -4,6 +4,11 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[package.metadata.game]
+title = "Triangle"
+description = "A fundamental rendering test displaying a 2D colored triangle using the Redixel rendering pipeline."
+tags = ["2D", "Rendering"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

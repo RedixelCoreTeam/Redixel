@@ -1,0 +1,58 @@
+name: Deploy WASM to Frontend
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-sync:
+    name: Build WASM & Sync to Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Engine Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Build WASM Examples
+        run: |
+          mkdir -p dist
+          PATHS=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.metadata != null and .metadata.game != null) | .manifest_path | sub("/Cargo.toml$"; "")')
+
+          for PKG_PATH in $PATHS; do
+            GAME_NAME=$(basename $PKG_PATH)
+            RUSTFLAGS=--cfg=web_sys_unstable_apis wasm-pack build $PKG_PATH --target web --out-dir $GITHUB_WORKSPACE/dist/$GAME_NAME
+          done
+
+      - name: Generate Manifest JSON
+        run: cargo run -p builder --release
+
+      - name: Checkout Frontend Repository
+        uses: actions/checkout@v4
+        with:
+          repository: RedixelCoreTeam/RedixelWeb
+          token: ${{ secrets.FRONTEND_DEPLOY_TOKEN }}
+          path: frontend-repo
+
+      - name: Copy Artifacts and Commit
+        run: |
+          mkdir -p frontend-repo/public/static
+          cp -r dist/* frontend-repo/public/static/
+          cd frontend-repo
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add public/static/
+            git commit -m "chore(engine): sync WASM artifacts and games manifest"
+            git push origin main
+          fi

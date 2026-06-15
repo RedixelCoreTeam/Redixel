@@ -4,6 +4,11 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[package.metadata.game]
+title = "Shooter"
+description = "A high-octane twin-stick arena shooter demonstrating manual entity management, collision handling, and a custom particle engine."
+tags = ["Physics", "Particles", "Top-Down"]
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 

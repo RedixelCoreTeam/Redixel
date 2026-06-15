@@ -1,5 +1,7 @@
 # Redixel
 
+[![Online Playground](https://img.shields.io/badge/Online-Playground-orange?style=for-the-badge)](https://redixel-web.vercel.app/)
+
 Redixel is a high-performance, strict 2D game engine written in Rust.
 
 The primary goal of this project is to build a clean, modular, and scalable engine architecture from scratch. It enforces strict software engineering standards—such as unidirectional data flow and strong layer separation—to prevent the technical debt common in growing game engines.

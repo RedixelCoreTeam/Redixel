@@ -210,6 +210,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "builder"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1269,6 +1277,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1616,6 +1625,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1854,6 +1864,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1865,6 +1876,7 @@ dependencies = [
  "env_logger",
  "log",
  "redixel",
+ "wasm-bindgen",
 ]
 
 [[package]]

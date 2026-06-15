@@ -89,7 +89,7 @@ impl WindowManager {
     fn set_css_property(style: &web_sys::CssStyleDeclaration, prop: &str, val: &str) -> Result<(), RedixelError> {
         style
             .set_property(prop, val)
-            .map_err(|_| RedixelError::JsException("Failed to set CSS property."))
+            .map_err(|_| RedixelError::JsException("Failed to set CSS property.".into()))
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -97,31 +97,31 @@ impl WindowManager {
         use winit::platform::web::WindowAttributesWeb;
 
         let web_window: web_sys::Window =
-            web_sys::window().ok_or(RedixelError::JsException("Global 'window' not found."))?;
+            web_sys::window().ok_or(RedixelError::JsException("Global 'window' not found.".into()))?;
 
         let document: web_sys::Document = web_window
             .document()
-            .ok_or(RedixelError::JsException("Global 'document' not found."))?;
+            .ok_or(RedixelError::JsException("Global 'document' not found.".into()))?;
 
         let body: web_sys::HtmlElement = document
             .body()
-            .ok_or(RedixelError::JsException("Global 'body' not found."))?;
+            .ok_or(RedixelError::JsException("Global 'body' not found.".into()))?;
 
         let canvas: web_sys::HtmlCanvasElement = match document.get_element_by_id("redixel-canvas") {
             Some(elem) => elem
                 .dyn_into::<web_sys::HtmlCanvasElement>()
-                .map_err(|_| RedixelError::JsException("Element is not a <canvas>."))?,
+                .map_err(|_| RedixelError::JsException("Element is not a <canvas>.".into()))?,
             None => {
                 log::info!("Injecting Redixel canvas into DOM...");
 
                 let elem: web_sys::Element = document
                     .create_element("canvas")
-                    .map_err(|_| RedixelError::JsException("Failed to create <canvas>."))?;
+                    .map_err(|_| RedixelError::JsException("Failed to create <canvas>.".into()))?;
 
                 elem.set_id("redixel-canvas");
 
                 body.append_child(&elem)
-                    .map_err(|_| RedixelError::JsException("Failed to append canvas to body."))?;
+                    .map_err(|_| RedixelError::JsException("Failed to append canvas to body.".into()))?;
 
                 elem.dyn_into::<web_sys::HtmlCanvasElement>().unwrap()
             }

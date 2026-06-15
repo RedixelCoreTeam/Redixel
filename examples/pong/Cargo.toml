@@ -4,6 +4,14 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[package.metadata.game]
+title = "Pong"
+description = "The classic reimagined. Showcasing deterministic physics and low-latency input handling."
+tags = ["Deterministic", "2D_Collision"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 redixel = { workspace = true }
 log = { workspace = true }
@@ -13,4 +21,5 @@ env_logger = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = { workspace = true }
+wasm-bindgen = { workspace = true }
 console_log = { workspace = true }

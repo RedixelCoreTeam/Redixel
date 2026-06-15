@@ -1,17 +1,13 @@
 name: Deploy WASM to Frontend
 
 on:
-  workflow_run:
-    workflows: ['Rust CI']
-    types:
-      - completed
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build-and-sync:
     name: Build WASM & Sync to Frontend
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout Engine Code

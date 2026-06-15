@@ -428,11 +428,17 @@ impl Game for Shooter {
                     agent.dash_cooldown = 1.2;
                     self.screen_shake = self.screen_shake.max(5.0);
 
+                    let particle_color: (u8, u8, u8) = if agent.rapid_fire_timer > 0.0 {
+                        (255, 200, 50)
+                    } else {
+                        (50, 150, 255)
+                    };
+
                     Self::spawn_particles(
                         &mut self.particles,
                         ParticleProps {
                             pos: agent.pos + Vec2::splat(ENTITY_SIZE / 2.0),
-                            color: (200, 200, 255),
+                            color: particle_color,
                             count: 15,
                             speed: 250.0,
                             seed: self.time_since_start,

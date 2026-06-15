@@ -1,7 +1,6 @@
 name: Deploy WASM to Frontend
 
 on:
-  pull_request:
   workflow_run:
     workflows: ['Rust CI']
     types:

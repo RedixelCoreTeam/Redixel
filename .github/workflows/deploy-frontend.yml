@@ -2,12 +2,17 @@ name: Deploy WASM to Frontend
 
 on:
   pull_request:
+  workflow_run:
+    workflows: ['Rust CI']
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
   build-and-sync:
     name: Build WASM & Sync to Frontend
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout Engine Code
@@ -46,6 +51,8 @@ jobs:
         run: |
           mkdir -p frontend-repo/public/static
           cp -r dist/* frontend-repo/public/static/
+
+          find frontend-repo/public/static -name ".gitignore" -type f -delete
           cd frontend-repo
 
           git config user.name "github-actions[bot]"

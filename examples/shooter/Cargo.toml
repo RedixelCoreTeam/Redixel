@@ -4,6 +4,14 @@ version.workspace = true
 edition.workspace = true
 publish = false
 
+[package.metadata.game]
+title = "Shooter"
+description = "A high-octane twin-stick arena shooter demonstrating manual entity management, collision handling, and a custom particle engine."
+tags = ["Physics", "Particles", "Top-Down"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 redixel = { workspace = true }
 log = { workspace = true }
@@ -13,4 +21,5 @@ env_logger = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = { workspace = true }
+wasm-bindgen = { workspace = true }
 console_log = { workspace = true }

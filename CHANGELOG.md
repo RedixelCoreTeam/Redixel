@@ -79,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Introduced the `InputSource` enum in `redixel-core` to seamlessly merge `KeyCode` and `MouseButton` bindings.
   - Added native mouse querying methods to `InputQuery` (`mouse_just_pressed`, `mouse_held`, `mouse_just_released`).
   - Added support for real-time cursor position tracking (`mouse_position`) and mouse wheel delta accumulation (`scroll_delta`).
+- **Automated Web Deployment Pipeline:**
+  - Implemented CI/CD workflow to compile examples into WASM and sync artifacts to the frontend repository.
 
 ### Changed
 

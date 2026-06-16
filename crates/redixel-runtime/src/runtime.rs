@@ -1,5 +1,5 @@
 use std::sync::{
-    Arc, RwLockReadGuard, mpsc,
+    Arc, mpsc,
     mpsc::{Receiver, Sender},
 };
 
@@ -19,9 +19,15 @@ use redixel_renderer::{Renderer, RendererConfig};
 
 use crate::{
     context::{Context, DrawCommand},
-    settings::{EngineSettings, RawBackend, RawPresentMode},
     time::TimeManager,
 };
+
+#[derive(Clone)]
+pub struct RuntimeConfig {
+    pub window: WindowConfig,
+    pub renderer: RendererConfig,
+    pub target_fps: f64,
+}
 
 type BridgePayload = Result<(Renderer, WindowManager), RedixelError>;
 
@@ -47,10 +53,11 @@ pub struct Runtime<G: Game> {
     fatal_error: Option<RedixelError>,
     bridge_tx: Sender<BridgePayload>,
     bridge_rx: Receiver<BridgePayload>,
+    config: RuntimeConfig,
 }
 
 impl<G: Game> Runtime<G> {
-    pub fn new(game: G) -> Self {
+    pub fn new(game: G, config: RuntimeConfig) -> Self {
         let (bridge_tx, bridge_rx): (Sender<BridgePayload>, Receiver<BridgePayload>) = mpsc::channel();
         Self {
             state: AppState::Initializing,
@@ -58,6 +65,7 @@ impl<G: Game> Runtime<G> {
             fatal_error: None,
             bridge_tx,
             bridge_rx,
+            config,
         }
     }
 
@@ -73,29 +81,11 @@ impl<G: Game> Runtime<G> {
         event_loop.exit();
     }
 
-    fn build_window_config() -> WindowConfig {
-        let settings: RwLockReadGuard<'_, EngineSettings> = EngineSettings::global_read();
-        WindowConfig {
-            title: settings.get_path("app.name", String::from("Redixel")),
-            width: settings.get_path("window.width", 1280),
-            height: settings.get_path("window.height", 720),
-            fullscreen: settings.get_path("window.fullscreen", false),
-        }
-    }
-
-    fn build_renderer_config() -> RendererConfig {
-        let settings: RwLockReadGuard<'_, EngineSettings> = EngineSettings::global_read();
-        RendererConfig {
-            backends: settings.get_path("renderer.backend", RawBackend(0)).into(),
-            present_mode: settings.get_path("renderer.present_mode", RawPresentMode(0)).into(),
-        }
-    }
-
     fn transition_to_running(&mut self, renderer: Renderer, window: WindowManager) {
         window.request_redraw();
 
         let mut time: TimeManager = TimeManager::new();
-        time.set_target_fps(EngineSettings::global_read().get_path("window.target_fps", 60.0));
+        time.set_target_fps(self.config.target_fps);
 
         let initial_size: PhysicalSize<u32> = window.surface_size();
         let mut context: Context<G::Action> = Context::new();
@@ -133,7 +123,7 @@ impl<G: Game> Runtime<G> {
         let tx: Sender<BridgePayload> = self.bridge_tx.clone();
         let window: Arc<dyn Window> = window_mgr.window_arc();
         let proxy: EventLoopProxy = event_loop.create_proxy();
-        let config: RendererConfig = Self::build_renderer_config();
+        let config: RendererConfig = self.config.renderer.clone();
 
         #[cfg(target_arch = "wasm32")]
         wasm_bindgen_futures::spawn_local(Self::init_gpu(tx, window, window_mgr, proxy, config));
@@ -144,9 +134,8 @@ impl<G: Game> Runtime<G> {
 
     fn on_can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
         log::info!("[1/3] Creating window…");
-        let window_config: WindowConfig = Self::build_window_config();
 
-        match WindowManager::new(event_loop, &window_config) {
+        match WindowManager::new(event_loop, &self.config.window) {
             Ok(window) => {
                 self.spawn_gpu_init(event_loop, window);
                 self.state = AppState::Loading;
@@ -245,15 +234,6 @@ impl<G: Game> Runtime<G> {
     }
 }
 
-impl<G: Game> Default for Runtime<G>
-where
-    G: Default,
-{
-    fn default() -> Self {
-        Self::new(G::default())
-    }
-}
-
 impl<G: Game> ApplicationHandler for Runtime<G> {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
         if matches!(self.state, AppState::Initializing) {
@@ -290,9 +270,25 @@ mod tests {
         fn on_render(&mut self, _ctx: &mut dyn GameContext<()>) {}
     }
 
+    fn mock_config() -> RuntimeConfig {
+        RuntimeConfig {
+            target_fps: 60.0,
+            window: WindowConfig {
+                width: 800,
+                height: 600,
+                fullscreen: false,
+                title: String::from("TEST_TITLE"),
+            },
+            renderer: RendererConfig {
+                backends: wgpu::Backends::all(),
+                present_mode: wgpu::PresentMode::AutoVsync,
+            },
+        }
+    }
+
     #[test]
     fn initial_state_is_initializing() {
-        let rt: Runtime<Dummy> = Runtime::new(Dummy);
+        let rt: Runtime<Dummy> = Runtime::new(Dummy, mock_config());
         assert!(matches!(rt.state, AppState::Initializing));
         assert!(rt.fatal_error.is_none());
         assert!(rt.pending_game.is_some());
@@ -300,7 +296,7 @@ mod tests {
 
     #[test]
     fn bridge_channel_is_open() {
-        let rt: Runtime<Dummy> = Runtime::new(Dummy);
+        let rt: Runtime<Dummy> = Runtime::new(Dummy, mock_config());
         rt.bridge_tx
             .send(Err(RedixelError::Dummy))
             .expect("channel must be open at construction");
@@ -309,7 +305,7 @@ mod tests {
 
     #[test]
     fn bridge_delivers_error_correctly() {
-        let rt: Runtime<Dummy> = Runtime::new(Dummy);
+        let rt: Runtime<Dummy> = Runtime::new(Dummy, mock_config());
         rt.bridge_tx.send(Err(RedixelError::Dummy)).unwrap();
         let received: Result<BridgePayload, TryRecvError> = rt.bridge_rx.try_recv();
         assert!(matches!(received.unwrap(), Err(RedixelError::Dummy)));
@@ -317,7 +313,7 @@ mod tests {
 
     #[test]
     fn take_error_moves_and_clears() {
-        let mut rt: Runtime<Dummy> = Runtime::new(Dummy);
+        let mut rt: Runtime<Dummy> = Runtime::new(Dummy, mock_config());
         rt.fatal_error = Some(RedixelError::Dummy);
         assert!(matches!(rt.take_error(), Some(RedixelError::Dummy)));
         assert!(rt.fatal_error.is_none());

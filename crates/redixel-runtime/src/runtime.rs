@@ -235,9 +235,13 @@ impl<G: Game> Runtime<G> {
             WindowEvent::RedrawRequested => {
                 self.run_frame(event_loop);
             }
-            ref e if state.context.process_input_event(e) => (),
-            ref e if state.window.process_window_event(e) => (),
-            _ => (),
+            ref e => {
+                if state.context.process_input_event(e) {
+                    return;
+                }
+
+                state.window.process_window_event(e);
+            }
         }
     }
 }

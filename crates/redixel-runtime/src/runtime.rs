@@ -156,6 +156,63 @@ impl<G: Game> Runtime<G> {
         }
     }
 
+    fn run_frame(&mut self, event_loop: &dyn ActiveEventLoop) {
+        let AppState::Running(state) = &mut self.state else {
+            return;
+        };
+
+        state.context.tick_input();
+        state.time.begin_frame();
+
+        state.context.update_timing(state.time.delta_time(), state.time.fps());
+        state.game.on_update(&mut state.context);
+
+        if state.context.should_exit() {
+            event_loop.exit();
+            return;
+        }
+
+        state.game.on_render(&mut state.context);
+
+        // Flush draw commands from context into renderer
+        for cmd in state.context.drain_commands() {
+            match cmd {
+                DrawCommand::ClearColor(c) => {
+                    state.renderer.set_clear_color(c);
+                }
+                DrawCommand::Rect { position, size, color } => {
+                    state.renderer.draw_rect(position, size, color);
+                }
+                DrawCommand::Triangle { p1, p2, p3, color } => {
+                    state.renderer.draw_triangle(p1, p2, p3, color);
+                }
+            }
+        }
+
+        match state.renderer.render() {
+            Ok(()) => {}
+            // Transient; skip the frame silently.
+            Err(RedixelError::Surface(SurfaceError::Timeout)) => {}
+            // The swap chain has been lost or is outdated; we must recreate it.
+            Err(RedixelError::Surface(SurfaceError::Lost | SurfaceError::Outdated)) => {
+                state.renderer.resize(state.window.surface_size());
+            }
+            Err(e) => {
+                self.fatal_error = Some(e);
+                event_loop.exit();
+                return;
+            }
+        }
+
+        state.context.reset_frame();
+        state.time.end_frame();
+        state
+            .time
+            .every_seconds(1.0, |fps: f64| state.window.set_title_fps(fps));
+
+        state.window.request_redraw();
+    }
+
     fn on_window_event(&mut self, event_loop: &dyn ActiveEventLoop, event: WindowEvent) {
         let AppState::Running(state) = &mut self.state else {
             if matches!(self.state, AppState::Loading) {
@@ -176,56 +233,7 @@ impl<G: Game> Runtime<G> {
             }
 
             WindowEvent::RedrawRequested => {
-                state.context.tick_input();
-                state.time.begin_frame();
-
-                state.context.update_timing(state.time.delta_time(), state.time.fps());
-                state.game.on_update(&mut state.context);
-
-                if state.context.should_exit() {
-                    event_loop.exit();
-                    return;
-                }
-
-                state.game.on_render(&mut state.context);
-
-                // Flush draw commands from context into renderer
-                for cmd in state.context.drain_commands() {
-                    match cmd {
-                        DrawCommand::ClearColor(c) => {
-                            state.renderer.set_clear_color(c);
-                        }
-                        DrawCommand::Rect { position, size, color } => {
-                            state.renderer.draw_rect(position, size, color);
-                        }
-                        DrawCommand::Triangle { p1, p2, p3, color } => {
-                            state.renderer.draw_triangle(p1, p2, p3, color);
-                        }
-                    }
-                }
-
-                match state.renderer.render() {
-                    Ok(()) => {}
-                    // Transient; skip the frame silently.
-                    Err(RedixelError::Surface(SurfaceError::Timeout)) => {}
-                    // The swap chain has been lost or is outdated; we must recreate it.
-                    Err(RedixelError::Surface(SurfaceError::Lost | SurfaceError::Outdated)) => {
-                        state.renderer.resize(state.window.surface_size());
-                    }
-                    Err(e) => {
-                        self.fatal_error = Some(e);
-                        event_loop.exit();
-                        return;
-                    }
-                }
-
-                state.context.reset_frame();
-                state.time.end_frame();
-                state
-                    .time
-                    .every_seconds(1.0, |fps: f64| state.window.set_title_fps(fps));
-
-                state.window.request_redraw();
+                self.run_frame(event_loop);
             }
             ref e if state.context.process_input_event(e) => (),
             ref e if state.window.process_window_event(e) => (),

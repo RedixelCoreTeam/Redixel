@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ['main', 'develop', 'dev-*']
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 

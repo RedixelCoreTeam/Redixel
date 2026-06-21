@@ -103,8 +103,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `InputBind::bind` now accepts a unified `InputSource` instead of a raw `KeyCode`, altering the public API.
   - Implemented a robust **Double Buffering** system with event queues (`pending_keys`, `pending_mouse`) to prevent dropped OS events.
   - Added a **Deferral Strategy** within the `tick()` lifecycle to completely eliminate "Phantom Clicks" (rapid press/release events within the same frame are now safely buffered and executed across frames).
-- **Runtime:** Decoupled `Runtime` from the global `EngineSettings` singleton. Configuration is now passed entirely via dependency injection, making the module deterministic.
-- **Runtime:** Extracted the massive core game loop and rendering pipeline from the `RedrawRequested` match arm into a dedicated, clean `run_frame()` method.
-- **Runtime:** Made event delegation explicit in `on_window_event` by replacing implicit match guards with clear `if` statements and early returns.
+- **Runtime Architecture Overhaul:** Refactored the core runtime module for better testability and maintainability:
+  - Decoupled `Runtime` from the global `EngineSettings` singleton by introducing explicit dependency injection via the new `RuntimeConfig` struct.
+  - Extracted the massive core game loop and rendering pipeline into a dedicated, clean `run_frame()` method.
+  - Made event delegation explicit in `on_window_event` by replacing implicit match guards with clear `if` statements and early returns.
 - **Core:** The main composition root (`redixel::run`) now handles reading the global state and assembling the `RuntimeConfig` prior to engine startup.
 - **Tests:** Refactored `runtime.rs` unit tests to use mocked configurations (`mock_config()`), allowing them to run in parallel without shared global state.

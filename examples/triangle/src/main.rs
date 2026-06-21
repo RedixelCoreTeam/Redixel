@@ -12,8 +12,3 @@ fn main() {
         panic!("Engine error: {e:?}");
     }
 }
-
-#[cfg(target_os = "android")]
-fn main() {
-    triangle::android_main();
-}

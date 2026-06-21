@@ -20,7 +20,8 @@ use crate::renderer::RendererConfig;
 /// All configurable behaviour is injected via [`RendererConfig`].
 #[derive(Debug)]
 pub(crate) struct GpuDevice {
-    pub(crate) surface: Surface<'static>,
+    pub(crate) instance: Instance,
+    pub(crate) surface: Option<Surface<'static>>,
     pub(crate) device: Device,
     pub(crate) queue: Queue,
     pub(crate) config: SurfaceConfiguration,
@@ -37,10 +38,11 @@ impl GpuDevice {
         surface.configure(&device, &config);
 
         Ok(Self {
-            surface,
             device,
             queue,
             config,
+            instance,
+            surface: Some(surface),
         })
     }
 
@@ -53,7 +55,28 @@ impl GpuDevice {
 
         self.config.width = new_size.width;
         self.config.height = new_size.height;
-        self.surface.configure(&self.device, &self.config);
+
+        if let Some(surface) = &self.surface {
+            surface.configure(&self.device, &self.config);
+        }
+    }
+
+    /// Drops the surface when the application is suspended.
+    /// This is necessary for platforms like Android to release graphics resources.
+    pub(crate) fn suspend(&mut self) {
+        self.surface = None;
+    }
+
+    /// Re-initializes the surface after the application is resumed.
+    /// Recreates the surface and configures it with the existing device settings.
+    pub(crate) fn resume(&mut self, window: &Arc<dyn Window>) -> Result<(), RedixelError> {
+        if self.surface.is_none() {
+            let surface: Surface = Self::create_surface(&self.instance, window)?;
+            surface.configure(&self.device, &self.config);
+            self.surface = Some(surface);
+        }
+
+        Ok(())
     }
 
     fn create_instance(backends: Backends) -> Instance {

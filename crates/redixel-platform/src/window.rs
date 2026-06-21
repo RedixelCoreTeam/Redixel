@@ -63,7 +63,7 @@ impl WindowManager {
 
     /// Returns `true` for events that the window manager should process.
     pub fn process_window_event(&self, event: &WindowEvent) -> bool {
-        matches!(event, WindowEvent::Focused(_) | WindowEvent::ScaleFactorChanged { .. })
+        matches!(event, WindowEvent::Focused(..) | WindowEvent::ScaleFactorChanged { .. })
     }
 
     fn build_attributes(config: &WindowConfig) -> Result<WindowAttributes, RedixelError> {

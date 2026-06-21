@@ -112,8 +112,14 @@ impl<A: InputAction> InputManager<A> {
             }
 
             WindowEvent::PointerButton { state, button, .. } => {
-                if let winit::event::ButtonSource::Mouse(mouse_btn) = button {
-                    self.pending_mouse.push((*mouse_btn, *state));
+                let mouse_btn: Option<MouseButton> = match button {
+                    winit::event::ButtonSource::Mouse(btn) => Some(*btn),
+                    winit::event::ButtonSource::Touch { .. } => Some(MouseButton::Left),
+                    _ => None,
+                };
+
+                if let Some(btn) = mouse_btn {
+                    self.pending_mouse.push((btn, *state));
                 }
 
                 true

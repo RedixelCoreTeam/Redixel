@@ -122,7 +122,7 @@ impl<A: InputAction> GameContext<A> for Context<A> {
 
     fn clear_color(&mut self, color: Color) {
         self.commands
-            .retain(|c: &DrawCommand| !matches!(c, DrawCommand::ClearColor(_)));
+            .retain(|c: &DrawCommand| !matches!(c, DrawCommand::ClearColor(..)));
         self.commands.push(DrawCommand::ClearColor(color));
     }
 

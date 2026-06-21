@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+
+- **Unified InputSource System**:
+  - Introduced the `InputSource` enum in `redixel-core` to seamlessly merge `KeyCode` and `MouseButton` bindings.
+  - Added native mouse querying methods to `InputQuery` (`mouse_just_pressed`, `mouse_held`, `mouse_just_released`).
+  - Added support for real-time cursor position tracking (`mouse_position`) and mouse wheel delta accumulation (`scroll_delta`).
+- **Automated Web Deployment Pipeline:**
+  - Implemented CI/CD workflow to compile examples into WASM and sync artifacts to the frontend repository.
+- **Runtime:** Introduced the `RuntimeConfig` struct to explicitly inject Window, Renderer, and target FPS settings into the engine.
+- **Time:** Introduced `display_fps()` to `TimeManager`, which calculates a smoothed rolling average of the framerate using a zero-allocation, fixed-size ring buffer.
+- **Android Support:** - Integrated `android_logger` for native Logcat integration.
+  - Implemented platform-specific entry point via `#[unsafe(no_mangle)] android_main`.
+  - Added JNI-based lifecycle management (suspend/resume) ensuring graphics resource safety.
+  - Configured `Cargo.toml` targets for `aarch64-linux-android` support.
+- **Cross-Platform Architecture:**
+  - Standardized entry points for PC, Web, and Android to ensure platform-agnostic `Game` trait implementation.
+  - Optimized memory management for mobile constraints using `Box::into_raw` and reborrowing strategies.
+
+### Changed
+
+- **Event Loop Cascading**: Streamlined the main event loop using the _Chain of Responsibility_ pattern, safely delegating OS events between the `Context` and `WindowManager`.
+- **InputManager Refactoring & Double Buffering**:
+  - `InputBind::bind` now accepts a unified `InputSource` instead of a raw `KeyCode`, altering the public API.
+  - Implemented a robust **Double Buffering** system with event queues (`pending_keys`, `pending_mouse`) to prevent dropped OS events.
+  - Added a **Deferral Strategy** within the `tick()` lifecycle to completely eliminate "Phantom Clicks" (rapid press/release events within the same frame are now safely buffered and executed across frames).
+- **Runtime Architecture Overhaul:** Refactored the core runtime module for better testability and maintainability:
+  - Decoupled `Runtime` from the global `EngineSettings` singleton by introducing explicit dependency injection via the new `RuntimeConfig` struct.
+  - Extracted the massive core game loop and rendering pipeline into a dedicated, clean `run_frame()` method.
+  - Made event delegation explicit in `on_window_event` by replacing implicit match guards with clear `if` statements and early returns.
+- **Core:** The main composition root (`redixel::run`) now handles reading the global state and assembling the `RuntimeConfig` prior to engine startup.
+- **Tests:** Refactored `runtime.rs` unit tests to use mocked configurations (`mock_config()`), allowing them to run in parallel without shared global state.
+- **Time:** The `every_seconds()` callback now yields the smoothed `display_fps()` instead of the raw, instantaneous FPS. This prevents UI counters and window titles from jittering rapidly due to OS context switching, while keeping the internal game physics strictly tied to the raw `delta_time()`.
+
 ## [0.1.0]
 
 ### Added
@@ -75,14 +110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Created the `DrawCommand` queue to buffer rendering primitives (`ClearColor`, `Rect`, `Triangle`) with intelligent deduplication logic.
 - **Engine Prelude**:
   - Added `redixel::prelude::*` to drastically improve Developer Experience (DX) and streamline imports for game developers.
-- **Unified InputSource System**:
-  - Introduced the `InputSource` enum in `redixel-core` to seamlessly merge `KeyCode` and `MouseButton` bindings.
-  - Added native mouse querying methods to `InputQuery` (`mouse_just_pressed`, `mouse_held`, `mouse_just_released`).
-  - Added support for real-time cursor position tracking (`mouse_position`) and mouse wheel delta accumulation (`scroll_delta`).
-- **Automated Web Deployment Pipeline:**
-  - Implemented CI/CD workflow to compile examples into WASM and sync artifacts to the frontend repository.
-- **Runtime:** Introduced the `RuntimeConfig` struct to explicitly inject Window, Renderer, and target FPS settings into the engine.
-- **Time:** Introduced `display_fps()` to `TimeManager`, which calculates a smoothed rolling average of the framerate using a zero-allocation, fixed-size ring buffer.
 
 ### Changed
 
@@ -99,15 +126,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Updated `winit` Web API integration to safely build `WindowAttributesWeb` without relying on deprecated trait extensions.
 - Removed dead code (e.g., `SetLoggerError` from engine error variants) to ensure the framework remains unopinionated about the consumer's logging setup.
 - **Internal API Encapsulation**: Refactored internal crates (`redixel-runtime`, `redixel-platform`) to use private modules and surgical `pub use` exports, preventing namespace pollution and protecting internal structures.
-- **Event Loop Cascading**: Streamlined the main event loop using the _Chain of Responsibility_ pattern, safely delegating OS events between the `Context` and `WindowManager`.
-- **InputManager Refactoring & Double Buffering**:
-  - `InputBind::bind` now accepts a unified `InputSource` instead of a raw `KeyCode`, altering the public API.
-  - Implemented a robust **Double Buffering** system with event queues (`pending_keys`, `pending_mouse`) to prevent dropped OS events.
-  - Added a **Deferral Strategy** within the `tick()` lifecycle to completely eliminate "Phantom Clicks" (rapid press/release events within the same frame are now safely buffered and executed across frames).
-- **Runtime Architecture Overhaul:** Refactored the core runtime module for better testability and maintainability:
-  - Decoupled `Runtime` from the global `EngineSettings` singleton by introducing explicit dependency injection via the new `RuntimeConfig` struct.
-  - Extracted the massive core game loop and rendering pipeline into a dedicated, clean `run_frame()` method.
-  - Made event delegation explicit in `on_window_event` by replacing implicit match guards with clear `if` statements and early returns.
-- **Core:** The main composition root (`redixel::run`) now handles reading the global state and assembling the `RuntimeConfig` prior to engine startup.
-- **Tests:** Refactored `runtime.rs` unit tests to use mocked configurations (`mock_config()`), allowing them to run in parallel without shared global state.
-- **Time:** The `every_seconds()` callback now yields the smoothed `display_fps()` instead of the raw, instantaneous FPS. This prevents UI counters and window titles from jittering rapidly due to OS context switching, while keeping the internal game physics strictly tied to the raw `delta_time()`.

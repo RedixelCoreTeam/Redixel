@@ -16,10 +16,14 @@ crate-type = ["cdylib", "rlib"]
 redixel = { workspace = true }
 log = { workspace = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(not(any(target_arch = "wasm32", target_os = "android")))'.dependencies]
 env_logger = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = { workspace = true }
 wasm-bindgen = { workspace = true }
 console_log = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = { workspace = true }
+winit = { workspace = true }

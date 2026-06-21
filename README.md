@@ -8,7 +8,7 @@ The primary goal of this project is to build a clean, modular, and scalable engi
 
 ## Technology Stack
 
-Redixel is built on top of the modern Rust ecosystem, prioritizing safety and cross-platform compatibility (Desktop & Web).
+Redixel is built on top of the modern Rust ecosystem, prioritizing safety and cross-platform compatibility (Desktop, Web & Android).
 
 | Component        | Technology  | Description                                                            |
 | :--------------- | :---------- | :--------------------------------------------------------------------- |
@@ -16,6 +16,159 @@ Redixel is built on top of the modern Rust ecosystem, prioritizing safety and cr
 | **Windowing**    | Winit       | Event loop management and low-level platform abstraction.              |
 | **Graphics**     | WGPU        | Portable graphics API targeting Vulkan, Metal, DX12, and WebGL/WebGPU. |
 | **Build System** | Cargo       | Standard Rust package manager and build tool.                          |
+
+## Getting Started
+
+### Prerequisites
+
+Before you can build and run the project, you'll need to have the Rust compiler and Cargo (Rust's package manager and build tool) installed on your system. If you don't have Rust installed, follow these steps:
+
+1. Visit [https://www.rust-lang.org/](https://www.rust-lang.org/) and follow the installation instructions for your operating system.
+
+2. Install Rust directly via the command line:
+
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+
+3. After installation, verify that Rust is installed by running:
+
+   ```bash
+   rustc --version
+   ```
+
+> This should output the installed version of the Rust compiler.
+
+### Running Native (Windows/Linux/macOS)
+
+To run the engine and the included `Shooter` game natively on your local machine:
+
+```sh
+cargo run --release --bin shooter
+```
+
+> **Note:** The `--release` flag compiles the engine with maximum optimizations, which is highly recommended to ensure stable framerates. For faster compilation times during development, you can omit this flag.
+
+### Running on Web (WASM)
+
+Redixel uses a pure-Rust pipeline for WebAssembly, requiring no manual HTML or JS files.
+
+1.  **Install the WASM target and server runner:**
+
+    ```sh
+    rustup target add wasm32-unknown-unknown
+    cargo install wasm-server-runner
+    ```
+
+2.  **Run the example:**
+    ```sh
+    cargo run --bin shooter --target wasm32-unknown-unknown
+    ```
+
+> This will automatically compile, generate bindings and start a local server at `http://127.0.0.1:1334`.
+
+### WebGPU on Linux (Chromium-based browsers)
+
+On Linux, **WebGPU is not fully enabled by default** on Chrome, Edge, Chromium, Opera, or Brave.
+As documented in the official GPUWeb Implementation Status, Linux support is **behind flags**.
+
+To run Redixel with WebGPU enabled on Linux, launch your browser with:
+
+```sh
+microsoft-edge \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+Or for Chrome/Chromium:
+
+```sh
+chromium \
+  --enable-unsafe-webgpu \
+  --ozone-platform=x11 \
+  --use-angle=vulkan \
+  --enable-features=Vulkan,VulkanFromANGLE
+```
+
+> Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
+
+### Running on Android
+
+Redixel provides native support for Android, leveraging JNI to maintain high performance and hardware access.
+
+1. **Install Android prerequisites:**
+   Ensure you have the [Android SDK](https://developer.android.com/studio) and `cargo-apk` installed:
+
+   ```sh
+   cargo install cargo-apk
+   ```
+
+<details>
+<summary><b>Show SDK & Environment Setup Details</b></summary>
+   
+To successfully build the APK, `cargo-apk` requires specific SDK packages and environment variables to be explicitly set.
+   
+**1. Android Studio SDK Manager**
+Open Android Studio, navigate to **Tools > SDK Manager**, and install:
+
+- **SDK Platforms:** Android API 33 or 34 (Android 13 or 14).
+- **SDK Tools:**
+  - Android SDK Build-Tools.
+  - NDK (Side by side) - e.g., version `xx.x.xxxxxxx`.
+  - Android SDK Command-line Tools (latest).
+
+**2. Environment Variables & PATH**
+You must set the SDK paths and ensure `adb` and `keytool` (Java) are accessible in your terminal.
+
+_Linux/macOS_ (Add to `~/.bashrc` or `~/.zshrc`):
+
+```sh
+export ANDROID_HOME=$HOME/Android/Sdk
+export NDK_HOME=$ANDROID_HOME/ndk/xx.x.xxxxxxx # Match your downloaded version
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+> **Note:** Ensure you have a JDK installed (e.g., sudo apt install default-jdk).
+
+_Windows_ (Add to System Environment Variables):
+
+- `ANDROID_HOME`: `C:\Users\YOUR_USER\AppData\Local\Android\Sdk`
+- `NDK_HOME`: `%ANDROID_HOME%\ndk\xx.x.xxxxxxx`
+- Edit your `Path` variable and append these two directories:
+- `%ANDROID_HOME%\platform-tools`
+- `C:\Program Files\Android\Android Studio\jbr\bin` (Required for `keytool`)
+
+**3. Accept SDK Licenses**
+Make sure you have accepted all licenses (you can do this in Android Studio or by running `sdkmanager --licenses` in your terminal).
+
+</details>
+
+2. **Add the target:**
+
+   ```sh
+   rustup target add aarch64-linux-android
+   ```
+
+3. **Run on your device:**
+   Before executing the command, ensure your phone has "Developer Options" enabled, turn on "USB Debugging", and accept the RSA key fingerprint prompt on your screen when connected via USB.
+
+   ```sh
+   cargo apk run -p shooter --lib
+   ```
+
+> **Note:** Logs can be inspected in real-time using `adb logcat -s REDIXEL_ENGINE`.
+
+### Manual Installation
+
+If you prefer to install the compiled APK manually without using USB Debugging, you can build it and find the output in the `target` directory:
+
+```sh
+cargo apk build -p shooter --lib
+```
+
+_The generated `.apk` will be located at `target/debug/apk/shooter.apk`. You can transfer this file to your device and install it directly._
 
 ## Architecture
 
@@ -74,85 +227,14 @@ redixel/
 │   └── redixel/                # Public facade API (pub use ...)
 └── examples/
     ├── pong/                   # Classic 2D game demonstrating input and physics
+    ├── shooter/                # 2D top-down shooter with AI, weapons, and particles
     ├── triangle/               # Basic 2D rendering example
     └── triangle_3d/            # Basic 3D rendering and camera example
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Rust Toolchain (Stable)
-
-### Running Native (Windows/Linux/macOS)
-
-To run the engine and the included Pong game natively on your local machine:
-
-```sh
-cargo run --release --bin pong
-```
-
-> **Note:** The `--release` flag compiles the engine with maximum optimizations, which is highly recommended to ensure stable framerates. For faster compilation times during development, you can omit this flag.
-
-### Running on Web (WASM)
-
-Redixel uses a pure-Rust pipeline for WebAssembly, requiring no manual HTML or JS files.
-
-1.  **Install the WASM target and server runner:**
-
-    ```sh
-    rustup target add wasm32-unknown-unknown
-    cargo install wasm-server-runner
-    ```
-
-2.  **Run the example:**
-    ```sh
-    cargo run --target wasm32-unknown-unknown -p pong
-    ```
-    This will automatically compile, generate bindings and start a local server at `http://127.0.0.1:1334`.
-
-### WebGPU on Linux (Chromium-based browsers)
-
-On Linux, **WebGPU is not fully enabled by default** on Chrome, Edge, Chromium, Opera, or Brave.
-As documented in the official GPUWeb Implementation Status, Linux support is **behind flags**.
-
-To run Redixel with WebGPU enabled on Linux, launch your browser with:
-
-```sh
-microsoft-edge \
-  --enable-unsafe-webgpu \
-  --ozone-platform=x11 \
-  --use-angle=vulkan \
-  --enable-features=Vulkan,VulkanFromANGLE
-```
-
-Or for Chrome/Chromium:
-
-```sh
-chromium \
-  --enable-unsafe-webgpu \
-  --ozone-platform=x11 \
-  --use-angle=vulkan \
-  --enable-features=Vulkan,VulkanFromANGLE
-```
-
-> Reference: [WebGPU Implementation Status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status#implementation-status)
-
-## Testing
-
-The Redixel test suite is focused on validating the pure CPU logic (e.g., input handling, runtime state, math vectors, and time calculation).
-
-### Running Unit Tests
-
-To execute all available logic tests:
-
-```sh
-cargo test
-```
-
 ## Roadmap
 
-The project is currently transitioning to Phase 2 (The Graphics Core).
+The project is currently in Phase 2 (The Graphics Core).
 For a detailed breakdown of upcoming features, including Batch Rendering, ECS, and Physics, please refer to the [ROADMAP](./ROADMAP.md).
 
 ## Contributing

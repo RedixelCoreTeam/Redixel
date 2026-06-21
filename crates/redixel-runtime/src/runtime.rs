@@ -54,6 +54,7 @@ pub struct Runtime<G: Game> {
     bridge_tx: Sender<BridgePayload>,
     bridge_rx: Receiver<BridgePayload>,
     config: RuntimeConfig,
+    is_suspended: bool,
 }
 
 impl<G: Game> Runtime<G> {
@@ -66,6 +67,7 @@ impl<G: Game> Runtime<G> {
             bridge_tx,
             bridge_rx,
             config,
+            is_suspended: false,
         }
     }
 
@@ -76,7 +78,6 @@ impl<G: Game> Runtime<G> {
     }
 
     fn abort(&mut self, event_loop: &dyn ActiveEventLoop, error: RedixelError) {
-        log::error!("Fatal error: {error}");
         self.fatal_error = Some(error);
         event_loop.exit();
     }
@@ -101,8 +102,6 @@ impl<G: Game> Runtime<G> {
             context,
             game,
         }));
-
-        log::info!("[3/3] Redixel is running.");
     }
 
     async fn init_gpu(
@@ -133,8 +132,6 @@ impl<G: Game> Runtime<G> {
     }
 
     fn on_can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
-        log::info!("[1/3] Creating window…");
-
         match WindowManager::new(event_loop, &self.config.window) {
             Ok(window) => {
                 self.spawn_gpu_init(event_loop, window);
@@ -147,12 +144,32 @@ impl<G: Game> Runtime<G> {
     fn on_proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
         let payload: Result<(Renderer, WindowManager), RedixelError> = match self.bridge_rx.try_recv() {
             Ok(p) => p,
-            Err(_) => return,
+            Err(..) => return,
         };
 
         match payload {
             Ok((renderer, window)) => self.transition_to_running(renderer, window),
             Err(e) => self.abort(event_loop, e),
+        }
+    }
+
+    fn on_app_suspended(&mut self) {
+        if let AppState::Running(state) = &mut self.state {
+            state.renderer.suspend();
+        }
+    }
+
+    fn on_app_resumed(&mut self, event_loop: &dyn ActiveEventLoop) {
+        self.is_suspended = false;
+
+        let result: Result<(), RedixelError> = if let AppState::Running(state) = &mut self.state {
+            state.renderer.resume(&state.window.window_arc())
+        } else {
+            Ok(())
+        };
+
+        if let Err(e) = result {
+            self.abort(event_loop, e);
         }
     }
 
@@ -215,12 +232,12 @@ impl<G: Game> Runtime<G> {
 
     fn on_window_event(&mut self, event_loop: &dyn ActiveEventLoop, event: WindowEvent) {
         let AppState::Running(state) = &mut self.state else {
-            if matches!(self.state, AppState::Loading) {
-                log::info!("[2/3] Awaiting GPU context…");
-            }
-
             return;
         };
+
+        if self.is_suspended {
+            return;
+        }
 
         match event {
             WindowEvent::CloseRequested | WindowEvent::Destroyed => {
@@ -235,6 +252,7 @@ impl<G: Game> Runtime<G> {
             WindowEvent::RedrawRequested => {
                 self.run_frame(event_loop);
             }
+
             ref e => {
                 if state.context.process_input_event(e) {
                     return;
@@ -248,14 +266,39 @@ impl<G: Game> Runtime<G> {
 
 impl<G: Game> ApplicationHandler for Runtime<G> {
     fn can_create_surfaces(&mut self, event_loop: &dyn ActiveEventLoop) {
-        if matches!(self.state, AppState::Initializing) {
-            log::info!("Initializing Redixel Engine.");
-            self.on_can_create_surfaces(event_loop);
+        match &mut self.state {
+            AppState::Initializing => {
+                log::info!("OS requested a surface. Initializing graphics bridge...");
+                self.on_can_create_surfaces(event_loop);
+            }
+            AppState::Loading => {
+                log::debug!("OS requested a surface, but ignored (waiting for GPU init).");
+            }
+            AppState::Running(..) => {
+                log::info!("App Resumed. Waking up engine and reconstructing GPU surface.");
+                self.on_app_resumed(event_loop);
+            }
+        }
+    }
+
+    fn suspended(&mut self, _event_loop: &dyn ActiveEventLoop) {
+        log::info!("OS requested suspension. Halting engine updates.");
+        self.is_suspended = true;
+
+        match self.state {
+            AppState::Initializing | AppState::Loading => {
+                log::debug!("Backgrounded before initialization completed.");
+            }
+            AppState::Running(..) => {
+                log::info!("Dropping active GPU surface to comply with OS background limits.");
+                self.on_app_suspended();
+            }
         }
     }
 
     fn proxy_wake_up(&mut self, event_loop: &dyn ActiveEventLoop) {
         if matches!(self.state, AppState::Loading) {
+            log::info!("GPU Initialization completed asynchronously. Transitioning to Running state.");
             self.on_proxy_wake_up(event_loop);
         }
     }
@@ -353,7 +396,7 @@ mod tests {
         let clears: Vec<&DrawCommand> = ctx
             .commands
             .iter()
-            .filter(|c: &&DrawCommand| matches!(c, DrawCommand::ClearColor(_)))
+            .filter(|c: &&DrawCommand| matches!(c, DrawCommand::ClearColor(..)))
             .collect();
 
         assert_eq!(clears.len(), 1);

@@ -29,6 +29,13 @@ impl Game for Triangle {
     }
 }
 
+#[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
+pub fn desktop_main() -> Result<(), RedixelError> {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    redixel::run_desktop(Triangle)?;
+    Ok(())
+}
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -36,17 +43,25 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(start)]
 pub fn wasm_main() -> Result<(), RedixelError> {
     console_error_panic_hook::set_once();
-    console_log::init_with_level(log::Level::Info).expect("Failed to initialize WASM logger");
-    redixel::run(Triangle).map_err(|e: RedixelError| RedixelError::JsException(format!("Engine error: {e}")))?;
+    console_log::init_with_level(log::Level::Info)?;
+    redixel::run_wasm(Triangle)?;
     Ok(())
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn main() {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+#[cfg(target_os = "android")]
+use winit::platform::android::activity::{AndroidApp, WindowManagerFlags};
 
-    if let Err(e) = redixel::run(Triangle) {
-        eprintln!("Engine error: {e}");
-        std::process::exit(1);
+#[cfg(target_os = "android")]
+#[unsafe(no_mangle)]
+pub fn android_main(app: AndroidApp) {
+    android_logger::init_once(
+        android_logger::Config::default()
+            .with_max_level(log::LevelFilter::Info)
+            .with_tag("REDIXEL_ENGINE"),
+    );
+
+    app.set_window_flags(WindowManagerFlags::KEEP_SCREEN_ON, WindowManagerFlags::empty());
+    if let Err(e) = redixel::run_android(Triangle, app) {
+        log::error!("Engine error: {e:?}");
     }
 }

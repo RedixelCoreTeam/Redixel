@@ -5,7 +5,10 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDescriptor, StoreOp, SurfaceTexture, TextureView, TextureViewDescriptor,
 };
 
-use winit::{dpi::PhysicalSize, window::Window};
+use winit::{
+    dpi::PhysicalSize,
+    window::{self, Window},
+};
 
 use redixel_core::RedixelError;
 use redixel_math::{Color, Mat4, Vec2};
@@ -63,6 +66,23 @@ impl Renderer {
         })
     }
 
+    /// Drops the presentation surface to yield GPU resources back to the OS.
+    ///
+    /// Essential for mobile platforms (like Android) where the OS invalidates the
+    /// native window when the app is minimized or the screen turns off.
+    /// Failing to drop the surface will result in a panic during the next render.
+    pub fn suspend(&mut self) {
+        self.device.suspend();
+    }
+
+    /// Reconstructs the presentation surface using a valid window handle.
+    ///
+    /// Call this when the OS resumes the application and provides a new native window,
+    /// ensuring the renderer is re-linked to the screen and can draw safely again.
+    pub fn resume(&mut self, window: &Arc<dyn window::Window>) -> Result<(), RedixelError> {
+        self.device.resume(window)
+    }
+
     /// Resizes the swap chain. Call whenever the window surface changes.
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         self.device.resize(new_size);
@@ -101,12 +121,16 @@ impl Renderer {
     /// 3. Flushes the sprite batch (one draw call)
     /// 4. Submits commands and presents
     pub fn render(&mut self) -> Result<(), RedixelError> {
+        let Some(surface) = &self.device.surface else {
+            return Ok(());
+        };
+
         let (w, h): (u32, u32) = self.surface_size();
 
         let projection: Mat4 = Mat4::orthographic(0.0, w as f32, h as f32, 0.0, -1.0, 1.0);
         self.pipeline.update_camera(&self.device.queue, projection.cols);
 
-        let output: SurfaceTexture = self.device.surface.get_current_texture()?;
+        let output: SurfaceTexture = surface.get_current_texture()?;
         let view: TextureView = output.texture.create_view(&TextureViewDescriptor::default());
 
         let mut encoder: CommandEncoder = self.device.device.create_command_encoder(&CommandEncoderDescriptor {

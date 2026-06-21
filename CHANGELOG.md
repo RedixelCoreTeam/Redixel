@@ -82,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Automated Web Deployment Pipeline:**
   - Implemented CI/CD workflow to compile examples into WASM and sync artifacts to the frontend repository.
 - **Runtime:** Introduced the `RuntimeConfig` struct to explicitly inject Window, Renderer, and target FPS settings into the engine.
+- **Time:** Introduced `display_fps()` to `TimeManager`, which calculates a smoothed rolling average of the framerate using a zero-allocation, fixed-size ring buffer.
 
 ### Changed
 
@@ -109,3 +110,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Made event delegation explicit in `on_window_event` by replacing implicit match guards with clear `if` statements and early returns.
 - **Core:** The main composition root (`redixel::run`) now handles reading the global state and assembling the `RuntimeConfig` prior to engine startup.
 - **Tests:** Refactored `runtime.rs` unit tests to use mocked configurations (`mock_config()`), allowing them to run in parallel without shared global state.
+- **Time:** The `every_seconds()` callback now yields the smoothed `display_fps()` instead of the raw, instantaneous FPS. This prevents UI counters and window titles from jittering rapidly due to OS context switching, while keeping the internal game physics strictly tied to the raw `delta_time()`.

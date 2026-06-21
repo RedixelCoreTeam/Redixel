@@ -110,6 +110,9 @@ jobs:
       - name: Install cargo-apk
         run: cargo install cargo-apk
 
+      - name: Install Android Platform 30
+        run: echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
+
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 

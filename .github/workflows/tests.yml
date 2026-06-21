@@ -60,9 +60,17 @@ jobs:
           export WGPU_BACKEND=vulkan
           xvfb-run --auto-servernum cargo test --workspace --verbose
 
+      - name: Build Executables (Linux)
+        if: runner.os == 'Linux'
+        run: cargo build --workspace --verbose
+
       - name: Run Tests (Windows)
         if: runner.os == 'Windows'
         run: cargo test --workspace --verbose
+
+      - name: Build Executables (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --workspace --verbose
 
   check-wasm:
     name: WASM Check
@@ -82,5 +90,35 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
 
-      - name: Verify WASM Compilation
-        run: cargo check --workspace --target wasm32-unknown-unknown --verbose
+      - name: Verify WASM Compilation (Build WASM)
+        run: cargo build --workspace --target wasm32-unknown-unknown --verbose
+
+  check-android:
+    name: Android Check
+    needs: check-format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: |
+          rustup target add aarch64-linux-android
+          rustup show
+
+      - name: Install cargo-apk
+        run: cargo install cargo-apk
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy
+        run: cargo clippy --target aarch64-linux-android -- -D warnings
+
+      - name: Verify Android Compilation (Build APKs)
+        run: |
+          cargo apk build -p pong --lib --verbose
+          cargo apk build -p shooter --lib --verbose
+          cargo apk build -p triangle --lib --verbose
+          cargo apk build -p triangle_3d --lib --verbose

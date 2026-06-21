@@ -38,6 +38,9 @@ pub enum RedixelError {
     #[error("Config parse error: {0}")]
     Config(#[from] serde_json::Error),
 
+    #[error("Logger initialization failed: {0}")]
+    Logger(String),
+
     #[cfg(target_arch = "wasm32")]
     #[error("JavaScript exception: {0}")]
     JsException(String),
@@ -46,9 +49,15 @@ pub enum RedixelError {
     Dummy,
 }
 
+impl From<log::SetLoggerError> for RedixelError {
+    fn from(e: log::SetLoggerError) -> Self {
+        RedixelError::Logger(e.to_string())
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 impl From<RedixelError> for JsValue {
-    fn from(err: RedixelError) -> JsValue {
-        JsValue::from_str(&err.to_string())
+    fn from(e: RedixelError) -> JsValue {
+        JsValue::from_str(&e.to_string())
     }
 }

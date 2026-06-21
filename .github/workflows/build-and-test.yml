@@ -1,0 +1,127 @@
+name: Build & Test
+
+on:
+  pull_request:
+    branches: ['main', 'develop', 'dev-*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  format:
+    name: Check Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Verify Formatting (rustfmt)
+        run: cargo fmt -- --check
+
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    needs: format
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Graphics Deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev libxkbcommon-x11-0 xvfb mesa-vulkan-drivers
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Lint (Clippy)
+        run: cargo clippy -- -D warnings
+
+      - name: Run Tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          export WGPU_BACKEND=vulkan
+          xvfb-run --auto-servernum cargo test --workspace --verbose
+
+      - name: Build Executables (Linux)
+        if: runner.os == 'Linux'
+        run: cargo build --workspace --verbose
+
+      - name: Run Tests (Windows)
+        if: runner.os == 'Windows'
+        run: cargo test --workspace --verbose
+
+      - name: Build Executables (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --workspace --verbose
+
+  wasm:
+    name: WebAssembly (WASM)
+    needs: format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Lint (Clippy)
+        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+
+      - name: Build Executables (WASM)
+        run: cargo build --workspace --target wasm32-unknown-unknown --verbose
+
+  android:
+    name: Android (APK)
+    needs: format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        run: |
+          rustup target add aarch64-linux-android
+          rustup show
+
+      - name: Install cargo-apk
+        run: cargo install cargo-apk
+
+      - name: Install Android Platform 30
+        run: echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-30"
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Lint (Clippy)
+        run: cargo clippy --target aarch64-linux-android -- -D warnings
+
+      - name: Build Executables (Android)
+        run: |
+          cargo apk build -p pong --lib
+          cargo apk build -p shooter --lib
+          cargo apk build -p triangle --lib
+          cargo apk build -p triangle_3d --lib

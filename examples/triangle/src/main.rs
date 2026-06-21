@@ -1,9 +1,12 @@
 fn main() {
-    #[cfg(target_arch = "wasm32")]
-    if let Err(e) = triangle::wasm_main() {
-        eprintln!("{e:?}");
+    #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
+    if let Err(e) = triangle::desktop_main() {
+        eprintln!("Engine error: {e:?}");
+        std::process::exit(0);
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    triangle::main();
+    #[cfg(target_arch = "wasm32")]
+    if let Err(e) = triangle::wasm_main() {
+        panic!("Engine error: {e:?}");
+    }
 }

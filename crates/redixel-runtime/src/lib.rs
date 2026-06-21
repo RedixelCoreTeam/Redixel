@@ -4,6 +4,6 @@ pub mod settings;
 pub mod time;
 
 pub use context::{Context, DrawCommand};
-pub use runtime::Runtime;
+pub use runtime::{Runtime, RuntimeConfig};
 pub use settings::{EngineSettings, RawBackend, RawPresentMode};
 pub use time::TimeManager;

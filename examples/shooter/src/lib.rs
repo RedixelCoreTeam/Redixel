@@ -584,8 +584,8 @@ impl Game for Shooter {
 
         for (agent, &push) in self.agents.iter_mut().zip(pushes.iter()) {
             agent.pos += push;
-            agent.pos.x = agent.pos.x.clamp(0.0, w - ENTITY_SIZE);
-            agent.pos.y = agent.pos.y.clamp(0.0, h - ENTITY_SIZE);
+            agent.pos.x = agent.pos.x.clamp(0.0, (w - ENTITY_SIZE).max(0.0));
+            agent.pos.y = agent.pos.y.clamp(0.0, (h - ENTITY_SIZE).max(0.0));
         }
 
         let mut a_idx: usize = 0;

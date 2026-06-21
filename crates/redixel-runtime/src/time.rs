@@ -13,13 +13,21 @@ use std::time::Instant;
 #[cfg(not(target_arch = "wasm32"))]
 const SPIN_THRESHOLD: f64 = 0.002;
 
+/// Number of recent frame times kept for the rolling average used by [`TimeManager::display_fps`].
+const FPS_WINDOW: usize = 60;
+
 /// Tracks frame timing and enforces an optional FPS cap.
+///
+/// Exposes two different FPS readings:
+/// - [`fps`](Self::fps): instantaneous, recalculated every single frame.
+/// - [`display_fps`](Self::display_fps): rolling average over the last [`FPS_WINDOW`] frames.
 ///
 /// # Usage
 /// ```ignore
 /// time.begin_frame();
 /// // ... render ...
 /// time.end_frame();
+/// time.every_seconds(1.0, |fps| window.set_title_fps(fps));
 /// ```
 #[derive(Debug)]
 pub struct TimeManager {
@@ -28,6 +36,9 @@ pub struct TimeManager {
     frame_start: Instant,
     frame_last: Instant,
     last_interval_tick: Instant,
+    frame_times: [f64; FPS_WINDOW],
+    frame_times_idx: usize,
+    frame_times_filled: usize,
 }
 
 impl TimeManager {
@@ -39,6 +50,9 @@ impl TimeManager {
             frame_start: now,
             frame_last: now,
             last_interval_tick: now,
+            frame_times: [0.0; FPS_WINDOW],
+            frame_times_idx: 0,
+            frame_times_filled: 0,
         }
     }
 
@@ -54,7 +68,7 @@ impl TimeManager {
 
     /// Call at the **end** of every frame, after `present()`.
     ///
-    /// Updates the FPS reading and sleeps/spins to honour the cap.
+    /// Updates both the instantaneous and rolling-average FPS readings, then sleeps/spins to honour the cap.
     pub fn end_frame(&mut self) {
         let now: Instant = Instant::now();
         let delta: f64 = now.duration_since(self.frame_last).as_secs_f64();
@@ -62,28 +76,50 @@ impl TimeManager {
 
         if delta > 0.0 {
             self.fps = 1.0 / delta;
+            self.push_frame_time(delta);
         }
 
         #[cfg(not(target_arch = "wasm32"))]
         self.enforce_cap();
     }
 
-    /// Returns the time in seconds between the last two frames.
+    /// Returns the time in seconds between the last two frames. Uses the **instantaneous** FPS
     pub fn delta_time(&self) -> f64 {
         if self.fps > 0.0 { 1.0 / self.fps } else { 0.0 }
     }
 
-    /// Returns the current FPS reading.
+    /// Returns the **instantaneous** FPS — recalculated every single frame.
     pub fn fps(&self) -> f64 {
         self.fps
     }
 
-    /// Invokes `callback` with the current FPS at most once per `interval` seconds.
+    /// Returns a **smoothed** FPS reading averaged over the last [`FPS_WINDOW`] frames.
+    pub fn display_fps(&self) -> f64 {
+        if self.frame_times_filled == 0 {
+            return 0.0;
+        }
+
+        let sum: f64 = self.frame_times[..self.frame_times_filled].iter().sum();
+        let avg_delta: f64 = sum / self.frame_times_filled as f64;
+        if avg_delta > 0.0 { 1.0 / avg_delta } else { 0.0 }
+    }
+
+    /// Invokes `callback` with the current **smoothed** FPS at most once per `interval` seconds.
     pub fn every_seconds<F: FnOnce(f64)>(&mut self, interval: f64, callback: F) {
         let now: Instant = Instant::now();
         if now.duration_since(self.last_interval_tick).as_secs_f64() >= interval {
             self.last_interval_tick = now;
-            callback(self.fps);
+            callback(self.display_fps());
+        }
+    }
+
+    /// Pushes a new frame delta into the ring buffer, overwriting the oldest sample once the buffer is full.
+    fn push_frame_time(&mut self, delta: f64) {
+        self.frame_times[self.frame_times_idx] = delta;
+        self.frame_times_idx = (self.frame_times_idx + 1) % FPS_WINDOW;
+
+        if self.frame_times_filled < FPS_WINDOW {
+            self.frame_times_filled += 1;
         }
     }
 
@@ -126,6 +162,7 @@ mod tests {
         let tm: TimeManager = TimeManager::new();
         assert_eq!(tm.fps, 0.0);
         assert_eq!(tm.frame_target, 0.0);
+        assert_eq!(tm.display_fps(), 0.0);
     }
 
     #[test]
@@ -154,6 +191,46 @@ mod tests {
         thread::sleep(Duration::from_millis(16));
         tm.end_frame();
         assert!(tm.fps > 50.0 && tm.fps < 80.0, "fps={}", tm.fps);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn display_fps_smooths_spikes() {
+        let mut tm: TimeManager = TimeManager::new();
+
+        for _ in 0..10 {
+            tm.end_frame();
+            thread::sleep(Duration::from_millis(16));
+        }
+
+        tm.end_frame();
+        thread::sleep(Duration::from_millis(200));
+        tm.end_frame();
+
+        assert!(tm.fps() < 15.0, "instant fps should reflect the spike, got {}", tm.fps());
+
+        assert!(
+            tm.display_fps() > 30.0,
+            "rolling average should absorb a single spike, got {}",
+            tm.display_fps()
+        );
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn display_fps_converges_to_stable_rate() {
+        let mut tm: TimeManager = TimeManager::new();
+
+        for _ in 0..FPS_WINDOW {
+            tm.end_frame();
+            thread::sleep(Duration::from_millis(10));
+        }
+
+        let display: f64 = tm.display_fps();
+        assert!(
+            display > 70.0 && display < 130.0,
+            "display_fps should converge near 100, got {display}"
+        );
     }
 
     #[cfg(not(target_arch = "wasm32"))]

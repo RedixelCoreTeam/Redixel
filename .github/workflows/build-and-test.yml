@@ -118,7 +118,7 @@ jobs:
 
       - name: Build Executables (Android)
         run: |
-          cargo apk build -p pong --lib --verbose
-          cargo apk build -p shooter --lib --verbose
-          cargo apk build -p triangle --lib --verbose
-          cargo apk build -p triangle_3d --lib --verbose
+          cargo apk build -p pong --lib
+          cargo apk build -p shooter --lib
+          cargo apk build -p triangle --lib
+          cargo apk build -p triangle_3d --lib

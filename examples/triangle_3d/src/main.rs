@@ -12,3 +12,6 @@ fn main() {
         panic!("Engine error: {e:?}");
     }
 }
+
+#[cfg(target_os = "android")]
+fn main() {}

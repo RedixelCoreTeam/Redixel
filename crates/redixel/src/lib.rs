@@ -22,6 +22,7 @@ pub fn run<G: Game>(game: G) -> Result<(), RedixelError> {
 
     let config: RuntimeConfig = {
         let settings: RwLockReadGuard<EngineSettings> = EngineSettings::global_read();
+
         let target_fps: f64 = settings.get_path("window.target_fps", 60.0);
 
         let window: WindowConfig = WindowConfig {
